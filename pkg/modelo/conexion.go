@@ -9,7 +9,7 @@ import (
   "strings"
 )
 
-var i = 0
+var contadorConexiones = 0
 
 /**
  * Una Conexion contiene la información y las acciones que realiza un
@@ -19,6 +19,7 @@ var i = 0
  */
 type Conexion struct {
 	nombre   string
+  serial   int
 	salas    map[string]*Sala
 	entrante chan *Mensaje
 	saliente chan string
@@ -36,7 +37,8 @@ func NuevaConexion(conn net.Conn) *Conexion {
 	lector := bufio.NewReader(conn)
 
 	conexion := &Conexion{
-		nombre:   fmt.Sprintf(CLIENTE_NOMBRE, i),
+		nombre:   fmt.Sprintf(CLIENTE_NOMBRE, contadorConexiones),
+    serial:   contadorConexiones,
 		salas:    make(map[string]*Sala),
 		entrante: make(chan *Mensaje),
 		saliente: make(chan string),
@@ -44,26 +46,32 @@ func NuevaConexion(conn net.Conn) *Conexion {
 		lector:   lector,
 		escritor: escritor,
 	}
-  i++
+  contadorConexiones++
 	conexion.Escucha()
 	return conexion
 }
 
 /**
- * Inicia dos goroutines, la primera lee del canal de salida del cliente y
- * escribe a su socket, y la segunda lee del socket del cliente, y escribe
- * en su canal de entrada.
+ * Asigna nombre a la conexión.
  */
-func (conexion *Conexion) Escucha() {
-	go conexion.Lee()
-	go conexion.Escribe()
+func (conexion *Conexion) SetNombre(nombre string) {
+  conexion.nombre = nombre
 }
+
+/**
+ * Regresa el serial de la conexión.
+ */
+func (conexion *Conexion) Serial() int {
+  return conexion.serial
+}
+
 
 /**
  * Lee las cadenas en el socket de la Conexion, les da formato de
  * Mensaje y los envía al canal entrante de la Conexion.
  */
 func (conexion *Conexion) Lee() {
+  log.SetFlags(log.LstdFlags | log.Lshortfile)
 	for {
 		str, err := conexion.lector.ReadString('\n')
 		if err != nil {
@@ -97,8 +105,18 @@ func (conexion *Conexion) Escribe() {
 }
 
 /**
+ * Inicia dos goroutines, la primera lee del canal de salida del cliente y
+ * escribe a su socket, y la segunda lee del socket del cliente, y escribe
+ * en su canal de entrada.
+ */
+func (conexion *Conexion) Escucha() {
+  go conexion.Escribe()
+  go conexion.Lee()
+}
+
+/**
  * Cierra la conexión del cliente.
  */
-func (conexion *Conexion) Quit() {
-	conexion.conn.Close()
+func (conexion *Conexion) Terminar() {
+  conexion.conn.Close()
 }

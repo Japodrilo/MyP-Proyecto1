@@ -2,6 +2,7 @@ package modelo
 
 import (
   "fmt"
+  "time"
 )
 
 /**
@@ -30,9 +31,12 @@ func NuevaSala(nombre string) *Sala {
  * Añade al cliente a la sala de chat.
  */
 func (sala *Sala) Agrega(conexion *Conexion) {
+  if conexion.salas[sala.nombre] != nil {
+    return
+  }
 	conexion.salas[sala.nombre] = sala
 	sala.conexiones = append(sala.conexiones, conexion)
-	sala.Transmite(fmt.Sprintf(EVENTO_ENTRA_SALA, conexion.nombre))
+	sala.TransmiteOtros(fmt.Sprintf(EVENTO_ENTRA_SALA, time.Now().Format(time.Kitchen), conexion.nombre), conexion)
 }
 
 /**
@@ -40,8 +44,8 @@ func (sala *Sala) Agrega(conexion *Conexion) {
  * que han sido enviados en la sala desde su creación.
  */
 func (sala *Sala) Historial(conexion *Conexion) {
-  for _, message := range sala.mensajes {
-		conexion.saliente <- message
+  for _, mensaje := range sala.mensajes {
+		conexion.saliente <- mensaje
 	}
 }
 
@@ -56,15 +60,27 @@ func (sala *Sala) Elimina(conexion *Conexion) {
 		}
 	}
 	delete(conexion.salas, sala.nombre)
-  sala.Transmite(fmt.Sprintf(EVENTO_DEJA_SALA, conexion.nombre, sala.nombre))
+  sala.Transmite(fmt.Sprintf(EVENTO_DEJA_SALA, time.Now().Format(time.Kitchen), conexion.nombre, sala.nombre))
 }
 
 /**
- * Envía el mensaje a todos los clientes en la sala.
+ * Envía el mensaje a todos los clientes conectados al servidor.
  */
-func (sala *Sala) Transmite(message string) {
-	sala.mensajes = append(sala.mensajes, message)
+func (sala *Sala) Transmite(mensaje string) {
+	sala.mensajes = append(sala.mensajes, mensaje)
 	for _, conexion := range sala.conexiones {
-		conexion.saliente <- message
+		conexion.saliente <- mensaje
+	}
+}
+
+/**
+ * Envía el mensaje a todos los demás clientes en el servidor.
+ */
+func (sala *Sala) TransmiteOtros(mensaje string, conexion *Conexion) {
+	sala.mensajes = append(sala.mensajes, mensaje)
+	for _, otraConexion := range sala.conexiones {
+    if conexion != otraConexion {
+		    otraConexion.saliente <- mensaje
+    }
 	}
 }
