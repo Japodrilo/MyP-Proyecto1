@@ -12,11 +12,11 @@ func TestNewMensaje(t *testing.T) {
   if err != nil {
     fmt.Println(err)
   }
-  conexion := NewConexion(conn)
-  hora := time.Date(1980, time.June, 6, 15, 0, 0, 0, time.UTC)
-  mensaje := NewMensaje(hora , conexion, "Mensaje de prueba")
+  conexion := NuevaConexion(conn)
+  hora := time.Date(1980, time.June, 25, 15, 0, 0, 0, time.UTC)
+  mensaje := NuevoMensaje(hora , conexion, "Mensaje de prueba")
   resultado := mensaje.String()
-  esperado := fmt.Sprintf("3:00PM - Anonymous: Mensaje de prueba\n")
+  esperado := fmt.Sprintf("3:00PM - Cliente 0: Mensaje de prueba\n")
   if resultado != esperado {
     t.Errorf("Se esperaba %v, se obtuvo %v", esperado, resultado)
   }
