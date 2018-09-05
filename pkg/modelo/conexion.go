@@ -73,11 +73,14 @@ func (conexion *Conexion) Serial() int {
 func (conexion *Conexion) Lee() {
   log.SetFlags(log.LstdFlags | log.Lshortfile)
 	for {
-		str, err := conexion.lector.ReadString('\n')
+    receptaculo := make([]byte, 1024)
+    n, err := conexion.lector.Read(receptaculo)
+		//str, err := conexion.lector.ReadString('\n')
 		if err != nil {
 			log.Println(err)
 			break
 		}
+    str := string(receptaculo[:n])
 		message := NuevoMensaje(time.Now(), conexion, strings.TrimSuffix(str, "\n"))
 		conexion.entrante <- message
 	}
