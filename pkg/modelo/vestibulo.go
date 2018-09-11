@@ -59,7 +59,8 @@ func (vestibulo *Vestibulo) Escucha() {
  */
 func (vestibulo *Vestibulo) Entrar(conexion *Conexion) {
 	vestibulo.conexiones = append(vestibulo.conexiones, conexion)
-	conexion.saliente <- MSJ_CONECTA
+	conexion.saliente <- "...Bienvenido al servidor, identifícate por favor:\n"
+  conexion.saliente <- "...IDENTIFY username\n"
   vestibulo.recepcion.Agrega(conexion)
   log.Printf("Conexión recibida de %v\n" +
              "Serial de Conexion: %v\n", conexion.conn.RemoteAddr(), conexion.serial)
@@ -92,38 +93,41 @@ func (vestibulo *Vestibulo) Elimina(conexion *Conexion) {
 /**
  * Función auxiliar para extraer el prefijo de un mensaje.
  */
-func (vestibulo *Vestibulo) parse(mensaje *Mensaje) (string, string, *Conexion){
+func (vestibulo *Vestibulo) parse(mensaje *Mensaje) (string, []string, *Conexion){
+  prefijo := ""
+  argumentos := strings.Fields(mensaje.texto)
   conexion := mensaje.conexion
   switch {
   case mensaje.texto == CMD_AYUDA:
-    return CMD_AYUDA, "", conexion
+    prefijo = CMD_AYUDA
 	case strings.HasPrefix(mensaje.texto, CMD_CREAR):
-		nombre := strings.TrimSuffix(strings.TrimPrefix(mensaje.texto, CMD_CREAR+" "), "\n")
-    return CMD_CREAR, nombre, conexion
+    prefijo = CMD_CREAR
   case strings.HasPrefix(mensaje.texto, CMD_ENTRAR):
-		nombre := strings.TrimSuffix(strings.TrimPrefix(mensaje.texto, CMD_ENTRAR+" "), "\n")
-    return CMD_ENTRAR, nombre, conexion
+    prefijo = CMD_ENTRAR
   case strings.HasPrefix(mensaje.texto, CMD_HISTORIAL):
-    nombre := strings.TrimSuffix(strings.TrimPrefix(mensaje.texto, CMD_HISTORIAL+" "), "\n")
-    return CMD_HISTORIAL, nombre, conexion
-  case strings.HasPrefix(mensaje.texto, CMD_MENSAJE):
-		texto := strings.TrimSuffix(strings.TrimPrefix(mensaje.texto, CMD_MENSAJE+" "), "\n")
-    return CMD_MENSAJE, texto, conexion
+    prefijo = CMD_HISTORIAL
+  case strings.HasPrefix(mensaje.texto, CMD_INVITAR):
+    prefijo = CMD_INVITAR
+  case strings.HasPrefix(mensaje.texto, CMD_MENSAJE_DIRECTO):
+    prefijo = CMD_MENSAJE_DIRECTO
+  case strings.HasPrefix(mensaje.texto, CMD_MENSAJE_PUBLICO):
+    prefijo = CMD_MENSAJE_PUBLICO
+  case strings.HasPrefix(mensaje.texto, CMD_MENSAJE_SALA):
+    prefijo = CMD_MENSAJE_SALA
   case strings.HasPrefix(mensaje.texto, CMD_NOMBRE):
-		nombre := strings.TrimSuffix(strings.TrimPrefix(mensaje.texto, CMD_NOMBRE+" "), "\n")
-    return CMD_NOMBRE, nombre, conexion
+    prefijo = CMD_NOMBRE
   case mensaje.texto == CMD_SALAS:
-		return CMD_SALAS, "", conexion
+		prefijo = CMD_SALAS
 	case strings.HasPrefix(mensaje.texto, CMD_SALIR):
-    nombre := strings.TrimSuffix(strings.TrimPrefix(mensaje.texto, CMD_SALIR+" "), "\n")
-    return CMD_SALIR, nombre, conexion
+    prefijo = CMD_SALIR
+  case strings.HasPrefix(mensaje.texto, CMD_STATUS):
+    prefijo = CMD_STATUS
 	case strings.HasPrefix(mensaje.texto, CMD_TERMINAR):
-    return CMD_TERMINAR, "", conexion
+    prefijo = CMD_TERMINAR
   case mensaje.texto == CMD_USUARIOS:
-    return CMD_USUARIOS, "", conexion
-  default:
-    return "", mensaje.texto, conexion
+    prefijo = CMD_USUARIOS
 	}
+  return prefijo, argumentos, conexion
 }
 
 /**
@@ -132,30 +136,82 @@ func (vestibulo *Vestibulo) parse(mensaje *Mensaje) (string, string, *Conexion){
  * envía un mensaje de error al cliente.
  */
 func (vestibulo *Vestibulo) Maneja(mensaje *Mensaje) {
-  prefijo, nombre, conexion := vestibulo.parse(mensaje)
+  prefijo, argumentos, conexion := vestibulo.parse(mensaje)
+  switch {
+  case prefijo == CMD_NOMBRE && len(argumentos) > 1:
+    vestibulo.CambiaNombre(conexion, argumentos[1])
+  case conexion.nombre == "":
+    vestibulo.Identificate(conexion)
+    return
+  }
   switch prefijo {
   case CMD_AYUDA:
     vestibulo.Ayuda(conexion)
   case CMD_CREAR:
-    vestibulo.CreaSala(conexion, nombre)
+    vestibulo.CreaSala(conexion, argumentos)
   case CMD_ENTRAR:
-    vestibulo.EntraSala(conexion, nombre)
+    vestibulo.EntraSala(conexion, argumentos)
   case CMD_HISTORIAL:
-    vestibulo.Historial(conexion, nombre)
-  case CMD_MENSAJE:
-    vestibulo.EnviaMensaje(conexion, mensaje.String())
-  case CMD_NOMBRE:
-    vestibulo.CambiaNombre(conexion, nombre)
+    vestibulo.Historial(conexion, argumentos[1])
+  case CMD_INVITAR:
+    vestibulo.Invitar(conexion, argumentos)
+  case CMD_MENSAJE_DIRECTO:
+    vestibulo.MensajeDirecto(conexion, argumentos)
+  case CMD_MENSAJE_PUBLICO:
+    vestibulo.MensajePublico(conexion, argumentos)
+  case CMD_MENSAJE_SALA:
+    vestibulo.MensajeSala(conexion, argumentos)
   case CMD_SALAS:
     vestibulo.ListaSalas(conexion)
   case CMD_SALIR:
-    vestibulo.DejarSala(conexion, nombre)
+    vestibulo.DejarSala(conexion, argumentos[1])
+  case CMD_STATUS:
+    vestibulo.Estado(conexion, argumentos)
   case CMD_TERMINAR:
     conexion.Terminar()
   case CMD_USUARIOS:
     vestibulo.Usuarios(conexion)
   case "":
-    vestibulo.noReconocido(conexion, nombre)
+    vestibulo.noReconocido(conexion, strings.Join(argumentos, " "))
+  }
+}
+
+/**
+ * Revisa si hay argumentos para el comando ejecutado por el cliente.
+ */
+func (vestibulo *Vestibulo) hayArgumentos(conexion *Conexion, argumentos []string, numeroArgumentos int) (ok bool) {
+  if len(argumentos) < numeroArgumentos {
+    vestibulo.mensajesValidos(conexion)
+    return false
+  }
+  return true
+}
+
+/**
+ * Indica al usuario cuáles son los mensajes válidos.
+ */
+func (vestibulo *Vestibulo) mensajesValidos(conexion *Conexion) {
+  conexion.saliente <- "...LOS MENSAJES VÁLIDOS SON:\n"
+  conexion.saliente <- "...IDENTIFY username\n"
+  conexion.saliente <- "...STATUS userStatus = {ACTIVE, AWAY, BUSY}\n"
+  conexion.saliente <- "...MESSAGE username messageContent\n"
+  conexion.saliente <- "...PUBLICMESSAGE messageContent\n"
+  conexion.saliente <- "...CREATEROOM roomname\n"
+  conexion.saliente <- "...INVITE roomname user1 user2 ...\n"
+  conexion.saliente <- "...JOINROOM roomname\n"
+  conexion.saliente <- "...ROOMESSAGE roomname messageContent\n"
+  conexion.saliente <- "...DISCONNECT\n"
+}
+
+
+/**
+ * Revisa si el cliente ya se identificó, de lo contrario,
+ * le pide que se identifique.
+ */
+func (vestibulo *Vestibulo) Identificate(conexion *Conexion) {
+  if conexion.nombre == "" {
+    conexion.saliente <- "...Debes identificarte primero.\n"
+    conexion.saliente <- "...IDENTIFY username\n"
   }
 }
 
@@ -166,49 +222,140 @@ func (vestibulo *Vestibulo) Maneja(mensaje *Mensaje) {
  */
 func (vestibulo *Vestibulo) noReconocido(conexion *Conexion, texto string) {
   conexion.saliente <- ERROR_DESCONOCIDO
+  vestibulo.mensajesValidos(conexion)
   log.Printf("%v envió un comando no reconocido: %v", conexion.nombre, texto)
 }
 
 /**
- * Intenta mandar el mensaje a las salas de chat en las que se
- * encuentra el cliente.
+ * Le da formato al mensaje dependiendo de su tipo, directo, público o de sala.
  */
-func (vestibulo *Vestibulo) EnviaMensaje(conexion *Conexion, texto string) {
-  vestibulo.recepcion.Transmite(texto)
-  for _, sala := range conexion.salas {
-    sala.Transmite(texto)
+func (vestibulo *Vestibulo) formateaMensaje(conexion *Conexion, argumentos []string) string {
+  switch argumentos[0] {
+  case CMD_MENSAJE_PUBLICO:
+    return fmt.Sprintf("%s - %s: %s\n", time.Now().Format(time.Kitchen), conexion.nombre, strings.Join(argumentos[1:], " "))
+  case CMD_MENSAJE_SALA:
+    return fmt.Sprintf("%s - %s: %s\n", time.Now().Format(time.Kitchen), conexion.nombre, strings.Join(argumentos[2:], " "))
+  case CMD_MENSAJE_DIRECTO:
+    return fmt.Sprintf("%s - %s: %s\n", time.Now().Format(time.Kitchen), conexion.nombre, strings.Join(argumentos[2:], " "))
+  default:
+    return ""
   }
-	log.Printf("%v envió un mensaje\n", conexion.nombre)
+}
+
+/**
+ * Intenta invitar a los usuarios a una sala de chat.
+ */
+func (vestibulo *Vestibulo) Invitar(conexion *Conexion, argumentos []string) {
+  if !vestibulo.hayArgumentos(conexion, argumentos, 3) {
+    return
+  }
+  sala := vestibulo.salas[argumentos[1]]
+  switch {
+  case sala == nil:
+    conexion.saliente <- ERROR_ENTRAR_NO_EXISTE
+  case sala.propietario.nombre != conexion.nombre:
+    conexion.saliente <- ERROR_INVITACION
+  default:
+    for _, nombre := range argumentos[2:] {
+      for _, cliente := range vestibulo.conexiones {
+        if cliente.nombre == nombre {
+          sala.Invita(cliente)
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Intenta mandar el mensaje al usuario objetivo.
+ */
+func (vestibulo *Vestibulo) MensajeDirecto(conexion *Conexion, argumentos []string) {
+  if !vestibulo.hayArgumentos(conexion, argumentos, 3) {
+    return
+  }
+  encontrado := false
+  for _, otroCliente := range vestibulo.conexiones {
+    if otroCliente.nombre == argumentos[1] {
+      otroCliente.saliente <- vestibulo.formateaMensaje(conexion, argumentos)
+      conexion.saliente <- MENSAJE_ENVIADO
+    	log.Printf("%v envió un mensaje público\n", conexion.nombre)
+      encontrado = true
+    }
+  }
+  if !encontrado {
+    conexion.saliente <- "...USUARIO NO ENCONTRADO\n"
+  }
+}
+
+/**
+ * Intenta mandar el mensaje a todos los usuarios conectados.
+ */
+func (vestibulo *Vestibulo) MensajePublico(conexion *Conexion, argumentos []string) {
+  if !vestibulo.hayArgumentos(conexion, argumentos, 2) {
+    return
+  }
+  vestibulo.recepcion.TransmiteOtros(vestibulo.formateaMensaje(conexion, argumentos), conexion)
+  conexion.saliente <- MENSAJE_ENVIADO
+	log.Printf("%v envió un mensaje público\n", conexion.nombre)
+}
+
+/**
+ * Intenta mandar el mensaje a la sala especificada.
+ */
+func (vestibulo *Vestibulo) MensajeSala(conexion *Conexion, argumentos []string) {
+  if !vestibulo.hayArgumentos(conexion, argumentos, 3) {
+    return
+  }
+  sala := conexion.salas[argumentos[1]]
+  if sala != nil {
+    sala.TransmiteOtros(vestibulo.formateaMensaje(conexion, argumentos), conexion)
+    conexion.saliente <- MENSAJE_ENVIADO
+    log.Printf("%v envió un mensaje en la sala %v\n", conexion.nombre, argumentos[1])
+    return
+  }
+  conexion.saliente <- fmt.Sprintf(ERROR_SALA, argumentos[1])
 }
 
 /**
  * Intenta crear una sala con el nombre dado.
  */
-func (vestibulo *Vestibulo) CreaSala(conexion *Conexion, nombre string) {
-	if vestibulo.salas[nombre] != nil {
-		conexion.saliente <- ERROR_CREAR
+func (vestibulo *Vestibulo) CreaSala(conexion *Conexion, argumentos []string) {
+  if !vestibulo.hayArgumentos(conexion, argumentos, 2) {
+    return
+  }
+  if vestibulo.salas[argumentos[1]] != nil {
+		conexion.saliente <- ERROR_NOMBRE
 		log.Printf("%v trató de crear una sala con un nombre ocupado\n", conexion.nombre)
 		return
 	}
-	sala := NuevaSala(nombre)
-	vestibulo.salas[nombre] = sala
+	sala := NuevaSala(argumentos[1], conexion)
+	vestibulo.salas[argumentos[1]] = sala
 	conexion.saliente <- fmt.Sprintf(EVENTO_PERSONAL_CREAR, time.Now().Format(time.Kitchen), sala.nombre)
-  vestibulo.salas[nombre].Agrega(conexion)
-	log.Printf("%v creó la sala %v", conexion.nombre, nombre)
+  vestibulo.salas[argumentos[1]].Agrega(conexion)
+	log.Printf("%v creó la sala %v", conexion.nombre, argumentos[1])
 }
 
 /**
  * Intenta añadir al cliente a la sala con el nombre dado,
  * siempre y cuando éste exista.
  */
-func (vestibulo *Vestibulo) EntraSala(conexion *Conexion, nombre string) {
-	if vestibulo.salas[nombre] == nil {
-		conexion.saliente <- ERROR_ENTRAR
+func (vestibulo *Vestibulo) EntraSala(conexion *Conexion, argumentos []string) {
+  if !vestibulo.hayArgumentos(conexion, argumentos, 2) {
+    return
+  }
+  sala := vestibulo.salas[argumentos[1]]
+	if sala == nil {
+		conexion.saliente <- ERROR_ENTRAR_NO_EXISTE
 		log.Printf("%v intentó entrar a una sala que no existe\n", conexion.nombre)
 		return
 	}
-	vestibulo.salas[nombre].Agrega(conexion)
-	log.Printf("%v entró a la sala %v", conexion.nombre, nombre)
+  if sala.invitados[conexion] {
+	  sala.Agrega(conexion)
+	  log.Printf("%v entró a la sala %v", conexion.nombre, argumentos[1])
+  } else {
+    conexion.saliente <- ERROR_ENTRAR_INVITACION
+    log.Printf("%v intentó entrar a una sala sin invitación\n", conexion.nombre)
+  }
 }
 
 /**
@@ -234,8 +381,10 @@ func (vestibulo *Vestibulo) Historial(conexion *Conexion, nombre string) {
  * Envía la lista de usuarios al cliente.
  */
 func (vestibulo *Vestibulo) Usuarios(conexion *Conexion) {
-  for i, usuario := range(vestibulo.conexiones) {
-    conexion.saliente <- fmt.Sprintf("%v. %v\n", i, usuario.nombre)
+  for _, usuario := range(vestibulo.conexiones) {
+    if usuario.nombre != "" {
+      conexion.saliente <- fmt.Sprintf("%v\n", usuario.nombre)
+    }
   }
   log.Printf("%v solicitó la lista de usuarios\n", conexion.nombre)
 }
@@ -250,7 +399,7 @@ func (vestibulo *Vestibulo) DejarSala(conexion *Conexion, nombre string) {
   	log.Printf("%v dejó la sala %v\n", conexion.nombre, nombre)
     return
 	}
-  conexion.saliente <- fmt.Sprintf(ERROR_SALIR, nombre)
+  conexion.saliente <- fmt.Sprintf(ERROR_SALA, nombre)
   log.Printf("%v intentó dejar una sala a la que no pertenece", conexion.nombre)
 }
 
@@ -258,15 +407,26 @@ func (vestibulo *Vestibulo) DejarSala(conexion *Conexion, nombre string) {
  * Cambia el nombre del cliente al nombre dado.
  */
 func (vestibulo *Vestibulo) CambiaNombre(conexion *Conexion, nombre string) {
-	if len(conexion.salas) == 0 {
-		conexion.saliente <- fmt.Sprintf(EVENTO_PERSONAL_NOMBRE, time.Now().Format(time.Kitchen), nombre)
-	} else {
-    for _, sala := range(conexion.salas) {
-		  sala.Transmite(fmt.Sprintf(EVENTO_SALA_NOMBRE, time.Now().Format(time.Kitchen), conexion.nombre, nombre))
-    }
+  for _, otherConexion := range vestibulo.conexiones {
+		if nombre == otherConexion.nombre {
+      conexion.saliente <- ERROR_NOMBRE
+			return
+		}
 	}
-	log.Printf("%v cambió su nombre a %v", conexion.nombre, nombre)
+	conexion.saliente <- fmt.Sprintf(EVENTO_PERSONAL_NOMBRE, time.Now().Format(time.Kitchen), nombre)
+	log.Printf("Cliente %v cambió su nombre a %v", conexion.serial, nombre)
   conexion.SetNombre(nombre)
+}
+
+/**
+ * Cambia el nombre del cliente al nombre dado.
+ */
+func (vestibulo *Vestibulo) Estado(conexion *Conexion, argumentos []string) {
+  if !vestibulo.hayArgumentos(conexion, argumentos, 2) {
+    return
+  }
+  conexion.SetStatus(argumentos[1])
+	log.Printf("%v cambió su estado a %v", conexion.nombre, argumentos[1])
 }
 
 /**
@@ -286,9 +446,8 @@ func (vestibulo *Vestibulo) ListaSalas(conexion *Conexion) {
  */
 func (vestibulo *Vestibulo) Ayuda(conexion *Conexion) {
 	conexion.saliente <- "\n"
-	conexion.saliente <- "Comandos:\n"
-	conexion.saliente <- "|=AYUDA - muestra todos los comandos\n"
-  conexion.saliente <- "|=CREAR foo - crea una sala de chat llamada foo\n"
+	conexion.saliente <- "Mensajes válidos:\n"
+  conexion.saliente <- "CREATEROOM roomname - crea una sala de chat llamada roomname\n"
   conexion.saliente <- "|=ENTRAR foo - entra a la sala de chat foo\n"
   conexion.saliente <- "|=HISTORIAL foo - muestra todos los mensajes y noticias en la sala foo\n"
   conexion.saliente <- "|=MENSAJE foo - envía el mensaje foo\n"

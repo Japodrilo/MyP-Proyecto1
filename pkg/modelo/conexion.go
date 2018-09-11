@@ -2,7 +2,6 @@ package modelo
 
 import (
   "bufio"
-  "fmt"
   "net"
   "log"
   "time"
@@ -20,6 +19,7 @@ var contadorConexiones = 0
 type Conexion struct {
 	nombre   string
   serial   int
+  status   string
 	salas    map[string]*Sala
 	entrante chan *Mensaje
 	saliente chan string
@@ -37,8 +37,9 @@ func NuevaConexion(conn net.Conn) *Conexion {
 	lector := bufio.NewReader(conn)
 
 	conexion := &Conexion{
-		nombre:   fmt.Sprintf(CLIENTE_NOMBRE, contadorConexiones),
+		nombre:   CLIENTE_NOMBRE,
     serial:   contadorConexiones,
+    status:   STS_ACTIVE,
 		salas:    make(map[string]*Sala),
 		entrante: make(chan *Mensaje),
 		saliente: make(chan string),
@@ -56,6 +57,25 @@ func NuevaConexion(conn net.Conn) *Conexion {
  */
 func (conexion *Conexion) SetNombre(nombre string) {
   conexion.nombre = nombre
+}
+
+/**
+ * Asigna un estado a la conexión.
+ */
+func (conexion *Conexion) SetStatus(estado string) {
+  switch estado {
+  case STS_ACTIVE:
+    conexion.status = STS_ACTIVE
+    conexion.saliente <- "CAMBIASTE TU ESTADO A ACTIVE\n"
+  case STS_AWAY:
+    conexion.status = STS_AWAY
+    conexion.saliente <- "CAMBIASTE TU ESTADO A AWAY\n"
+  case STS_BUSY:
+    conexion.status = STS_BUSY
+    conexion.saliente <- "CAMBIASTE TU ESTADO A BUSY\n"
+  default:
+    conexion.saliente <- "LOS ESTADOS SON ACTIVE, AWAY, BUSY\n"
+  }
 }
 
 /**

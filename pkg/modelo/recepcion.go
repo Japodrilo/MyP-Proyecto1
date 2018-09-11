@@ -1,12 +1,5 @@
 package modelo
 
-import (
-  "fmt"
-  "time"
-)
-
-
-
 /**
  * La recepción es una sala de chat especial, su nombre por omisión es
  * "recepcion", tiene una lista de los clientes actualmente conectados y
@@ -21,7 +14,7 @@ type Recepcion struct {
  * Crea una recepción vacía con el nombre por omisión.
  */
 func NuevaRecepcion() *Recepcion {
-  sala := NuevaSala("recepcion")
+  sala := NuevaSala("recepcion", nil)
   recepcion := Recepcion{sala}
   return &recepcion
 }
@@ -31,7 +24,6 @@ func NuevaRecepcion() *Recepcion {
  */
 func (recepcion *Recepcion) Agrega(conexion *Conexion) {
 	recepcion.conexiones = append(recepcion.conexiones, conexion)
-	recepcion.TransmiteOtros(fmt.Sprintf(EVENTO_INICIO_SESION, time.Now().Format(time.Kitchen), conexion.nombre), conexion)
 }
 
 /**
@@ -44,5 +36,4 @@ func (recepcion *Recepcion) Elimina(conexion *Conexion) {
 			break
 		}
 	}
-  recepcion.Transmite(fmt.Sprintf(EVENTO_DESCONEXION_USUARIO, time.Now().Format(time.Kitchen), conexion.nombre))
 }
