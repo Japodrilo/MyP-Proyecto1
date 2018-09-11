@@ -12,17 +12,21 @@ import (
  */
 type Sala struct {
 	nombre      string
+  propietario *Conexion
 	conexiones  []*Conexion
+  invitados   map[*Conexion]bool
 	mensajes    []string
 }
 
 /**
  * Crea una sala de chat vacía con el nombre dado.
  */
-func NuevaSala(nombre string) *Sala {
+func NuevaSala(nombre string, propietario *Conexion) *Sala {
 	return &Sala{
 		nombre:      nombre,
+    propietario: propietario,
 		conexiones:  make([]*Conexion, 0),
+    invitados:   make(map[*Conexion]bool),
 		mensajes:    make([]string, 0),
 	}
 }
@@ -36,8 +40,22 @@ func (sala *Sala) Agrega(conexion *Conexion) {
   }
 	conexion.salas[sala.nombre] = sala
 	sala.conexiones = append(sala.conexiones, conexion)
-	sala.TransmiteOtros(fmt.Sprintf(EVENTO_ENTRA_SALA, time.Now().Format(time.Kitchen), conexion.nombre), conexion)
 }
+
+/**
+ * Añade al cliente a la lista de invitados.
+ */
+ func (sala *Sala) Invita(conexion *Conexion) {
+   if conexion.nombre == sala.propietario.nombre {
+     return
+   }
+   conexion.saliente <- fmt.Sprintf("...INVITACIÓN DE %v PARA ENTRAR A LA SALA %v\n", sala.propietario.nombre, sala.nombre)
+   conexion.saliente <- fmt.Sprintf("...JOINROOM %v\n", sala.nombre)
+   if sala.invitados[conexion] {
+     return
+   }
+   sala.invitados[conexion] = true
+ }
 
 /**
  * Envía al cliente el historial de todos los mensajes y noticias

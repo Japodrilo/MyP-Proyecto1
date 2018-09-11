@@ -31,5 +31,5 @@ func NuevoMensaje(hora time.Time, conexion *Conexion, texto string) *Mensaje {
  * Regresa una representación del mensaje como cadena.
  */
 func (mensaje *Mensaje) String() string {
-	return fmt.Sprintf("%s - %s: %s\n", mensaje.hora.Format(time.Kitchen), mensaje.conexion.nombre, strings.TrimPrefix(mensaje.texto, CMD_MENSAJE+" "))
+	return fmt.Sprintf("%s - %s: %s\n", mensaje.hora.Format(time.Kitchen), mensaje.conexion.nombre, strings.TrimPrefix(mensaje.texto, CMD_MENSAJE_PUBLICO+" "))
 }
