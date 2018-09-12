@@ -23,17 +23,12 @@ func NuevaRecepcion() *Recepcion {
  * Añade al cliente a la sala de chat.
  */
 func (recepcion *Recepcion) Agrega(conexion *Conexion) {
-	recepcion.conexiones = append(recepcion.conexiones, conexion)
+	recepcion.conexiones[conexion] = true
 }
 
 /**
  * Elimina al cliente de la recepción.
  */
 func (recepcion *Recepcion) Elimina(conexion *Conexion) {
-	for i, otherConexion := range recepcion.conexiones {
-		if conexion == otherConexion {
-			recepcion.conexiones = append(recepcion.conexiones[:i], recepcion.conexiones[i+1:]...)
-			break
-		}
-	}
+	delete (recepcion.conexiones, conexion)
 }
