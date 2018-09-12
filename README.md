@@ -8,8 +8,6 @@ Versión: go version go1.10.3 darwin/amd64
 Este proyecto tiene dos clases principales, servidor.go y cliente.go,
 ambas generan archivos binarios ejecutables al compilar que son,
 respectivamente, un servidor y un cliente de chat en una conexión TCP.
-El protocolo se describe con el comando "|=AYUDA" al correr el
-servidor.
 
 Para compilarlo, la carpeta base debe de estar en el GOPATH, en la
 ruta src/github.com/Japodrilo/MyP-Proyecto1, de donde puede utilizarse
