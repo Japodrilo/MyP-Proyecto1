@@ -13,7 +13,7 @@ import (
 type Sala struct {
 	nombre      string
   propietario *Conexion
-	conexiones  []*Conexion
+	conexiones  map[*Conexion]bool
   invitados   map[*Conexion]bool
 	mensajes    []string
 }
@@ -25,7 +25,7 @@ func NuevaSala(nombre string, propietario *Conexion) *Sala {
 	return &Sala{
 		nombre:      nombre,
     propietario: propietario,
-		conexiones:  make([]*Conexion, 0),
+		conexiones:  make(map[*Conexion]bool),
     invitados:   make(map[*Conexion]bool),
 		mensajes:    make([]string, 0),
 	}
@@ -39,14 +39,14 @@ func (sala *Sala) Agrega(conexion *Conexion) {
     return
   }
 	conexion.salas[sala.nombre] = sala
-	sala.conexiones = append(sala.conexiones, conexion)
+	sala.conexiones[conexion] = true
 }
 
 /**
  * Añade al cliente a la lista de invitados.
  */
  func (sala *Sala) Invita(conexion *Conexion) {
-   if conexion.nombre == sala.propietario.nombre {
+   if conexion.nombre == sala.propietario.nombre || sala.conexiones[conexion] {
      return
    }
    conexion.saliente <- fmt.Sprintf("...INVITACIÓN DE %v PARA ENTRAR A LA SALA %v\n", sala.propietario.nombre, sala.nombre)
@@ -71,13 +71,9 @@ func (sala *Sala) Historial(conexion *Conexion) {
  * Elimina al cliente de la sala de chat.
  */
 func (sala *Sala) Elimina(conexion *Conexion) {
-	for i, otherConexion := range sala.conexiones {
-		if conexion == otherConexion {
-			sala.conexiones = append(sala.conexiones[:i], sala.conexiones[i+1:]...)
-			break
-		}
-	}
+  delete(sala.conexiones, conexion)
 	delete(conexion.salas, sala.nombre)
+  delete(sala.invitados, conexion)
   sala.Transmite(fmt.Sprintf(EVENTO_DEJA_SALA, time.Now().Format(time.Kitchen), conexion.nombre, sala.nombre))
 }
 
@@ -86,7 +82,7 @@ func (sala *Sala) Elimina(conexion *Conexion) {
  */
 func (sala *Sala) Transmite(mensaje string) {
 	sala.mensajes = append(sala.mensajes, mensaje)
-	for _, conexion := range sala.conexiones {
+	for conexion, _ := range sala.conexiones {
 		conexion.saliente <- mensaje
 	}
 }
@@ -96,7 +92,7 @@ func (sala *Sala) Transmite(mensaje string) {
  */
 func (sala *Sala) TransmiteOtros(mensaje string, conexion *Conexion) {
 	sala.mensajes = append(sala.mensajes, mensaje)
-	for _, otraConexion := range sala.conexiones {
+	for otraConexion, _ := range sala.conexiones {
     if conexion != otraConexion {
 		    otraConexion.saliente <- mensaje
     }

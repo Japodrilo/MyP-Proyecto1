@@ -12,12 +12,13 @@ import (
  * y distribuye los mensajes.
  */
 type Vestibulo struct {
-  recepcion  *Recepcion
-  conexiones []*Conexion
-	salas      map[string]*Sala
-	entrante   chan *Mensaje
-	join       chan *Conexion
-	leave      chan *Conexion
+  recepcion   *Recepcion
+  conexionesT map[*Conexion]bool
+  conexiones  map[string]*Conexion
+	salas       map[string]*Sala
+	entrante    chan *Mensaje
+	join        chan *Conexion
+	leave       chan *Conexion
 }
 
 /**
@@ -25,12 +26,13 @@ type Vestibulo struct {
  */
 func NuevoVestibulo() *Vestibulo {
 	vestibulo := &Vestibulo{
-    recepcion:  NuevaRecepcion(),
-		conexiones: make([]*Conexion, 0),
-		salas:      make(map[string]*Sala),
-		entrante:   make(chan *Mensaje),
-		join:       make(chan *Conexion),
-		leave:      make(chan *Conexion),
+    recepcion:   NuevaRecepcion(),
+		conexionesT: make(map[*Conexion]bool),
+    conexiones:  make(map[string]*Conexion),
+		salas:       make(map[string]*Sala),
+		entrante:    make(chan *Mensaje),
+		join:        make(chan *Conexion),
+		leave:       make(chan *Conexion),
 	}
 	vestibulo.Escucha()
 	return vestibulo
@@ -58,7 +60,7 @@ func (vestibulo *Vestibulo) Escucha() {
  * Se encarga de los clientes que se conectan al vestíbulo.
  */
 func (vestibulo *Vestibulo) Entrar(conexion *Conexion) {
-	vestibulo.conexiones = append(vestibulo.conexiones, conexion)
+	vestibulo.conexionesT[conexion] = true
 	conexion.saliente <- "...Bienvenido al servidor, identifícate por favor:\n"
   conexion.saliente <- "...IDENTIFY username\n"
   vestibulo.recepcion.Agrega(conexion)
@@ -77,15 +79,10 @@ func (vestibulo *Vestibulo) Entrar(conexion *Conexion) {
  */
 func (vestibulo *Vestibulo) Elimina(conexion *Conexion) {
   vestibulo.recepcion.Elimina(conexion)
+  delete(vestibulo.conexiones, conexion.nombre)
   for _, sala := range conexion.salas {
     sala.Elimina(conexion)
   }
-	for i, otherConexion := range vestibulo.conexiones {
-		if conexion == otherConexion {
-			vestibulo.conexiones = append(vestibulo.conexiones[:i], vestibulo.conexiones[i+1:]...)
-			break
-		}
-	}
 	close(conexion.saliente)
 	log.Printf("Se cerró el canal saliente de %v\n", conexion.nombre)
 }
@@ -257,10 +254,14 @@ func (vestibulo *Vestibulo) Invitar(conexion *Conexion, argumentos []string) {
     conexion.saliente <- ERROR_INVITACION
   default:
     for _, nombre := range argumentos[2:] {
-      for _, cliente := range vestibulo.conexiones {
-        if cliente.nombre == nombre {
+      cliente, ok := vestibulo.conexiones[nombre]
+      switch {
+        case ok && nombre != sala.propietario.nombre:
           sala.Invita(cliente)
-        }
+        case ok:
+          continue
+        default:
+          conexion.saliente <- fmt.Sprintf("...USUARIO %v NO ENCONTRADO\n", nombre)
       }
     }
   }
@@ -273,16 +274,12 @@ func (vestibulo *Vestibulo) MensajeDirecto(conexion *Conexion, argumentos []stri
   if !vestibulo.hayArgumentos(conexion, argumentos, 3) {
     return
   }
-  encontrado := false
-  for _, otroCliente := range vestibulo.conexiones {
-    if otroCliente.nombre == argumentos[1] {
-      otroCliente.saliente <- vestibulo.formateaMensaje(conexion, argumentos)
-      conexion.saliente <- MENSAJE_ENVIADO
-    	log.Printf("%v envió un mensaje público\n", conexion.nombre)
-      encontrado = true
-    }
-  }
-  if !encontrado {
+  destinatario, ok := vestibulo.conexiones[argumentos[1]]
+  if ok {
+    conexion.saliente <- MENSAJE_ENVIADO
+    destinatario.saliente <- vestibulo.formateaMensaje(conexion, argumentos)
+    log.Printf("%v envió un mensaje público\n", conexion.nombre)
+  } else {
     conexion.saliente <- "...USUARIO NO ENCONTRADO\n"
   }
 }
@@ -381,10 +378,8 @@ func (vestibulo *Vestibulo) Historial(conexion *Conexion, nombre string) {
  * Envía la lista de usuarios al cliente.
  */
 func (vestibulo *Vestibulo) Usuarios(conexion *Conexion) {
-  for _, usuario := range(vestibulo.conexiones) {
-    if usuario.nombre != "" {
-      conexion.saliente <- fmt.Sprintf("%v\n", usuario.nombre)
-    }
+  for usuario, _ := range(vestibulo.conexiones) {
+      conexion.saliente <- fmt.Sprintf("%v\n", usuario)
   }
   log.Printf("%v solicitó la lista de usuarios\n", conexion.nombre)
 }
@@ -407,14 +402,17 @@ func (vestibulo *Vestibulo) DejarSala(conexion *Conexion, nombre string) {
  * Cambia el nombre del cliente al nombre dado.
  */
 func (vestibulo *Vestibulo) CambiaNombre(conexion *Conexion, nombre string) {
-  for _, otherConexion := range vestibulo.conexiones {
-		if nombre == otherConexion.nombre {
+  for otraConexion, _ := range vestibulo.conexiones {
+		if nombre == otraConexion {
       conexion.saliente <- ERROR_NOMBRE
 			return
 		}
 	}
 	conexion.saliente <- fmt.Sprintf(EVENTO_PERSONAL_NOMBRE, time.Now().Format(time.Kitchen), nombre)
 	log.Printf("Cliente %v cambió su nombre a %v", conexion.serial, nombre)
+  delete(vestibulo.conexiones, conexion.nombre)
+  vestibulo.conexiones[nombre] = conexion
+  vestibulo.conexionesT[conexion] = false
   conexion.SetNombre(nombre)
 }
 
