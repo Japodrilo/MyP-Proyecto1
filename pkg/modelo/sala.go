@@ -2,7 +2,6 @@ package modelo
 
 import (
   "fmt"
-  "time"
 )
 
 /**
@@ -46,11 +45,8 @@ func (sala *Sala) Agrega(conexion *Conexion) {
  * Añade al cliente a la lista de invitados.
  */
  func (sala *Sala) Invita(conexion *Conexion) {
-   if conexion.nombre == sala.propietario.nombre || sala.conexiones[conexion] {
-     return
-   }
-   conexion.saliente <- fmt.Sprintf("...INVITACIÓN DE %v PARA ENTRAR A LA SALA %v\n", sala.propietario.nombre, sala.nombre)
-   conexion.saliente <- fmt.Sprintf("...JOINROOM %v\n", sala.nombre)
+   conexion.saliente <- fmt.Sprintf("...INVITATION TO JOIN %v ROOM BY %v\n", sala.nombre, sala.propietario.nombre)
+   conexion.saliente <- fmt.Sprintf("...TO JOIN: JOIN %v\n", sala.nombre)
    if sala.invitados[conexion] {
      return
    }
@@ -74,7 +70,6 @@ func (sala *Sala) Elimina(conexion *Conexion) {
   delete(sala.conexiones, conexion)
 	delete(conexion.salas, sala.nombre)
   delete(sala.invitados, conexion)
-  sala.Transmite(fmt.Sprintf(EVENTO_DEJA_SALA, time.Now().Format(time.Kitchen), conexion.nombre, sala.nombre))
 }
 
 /**

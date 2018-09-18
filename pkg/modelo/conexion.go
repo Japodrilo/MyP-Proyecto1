@@ -66,15 +66,13 @@ func (conexion *Conexion) SetStatus(estado string) {
   switch estado {
   case STS_ACTIVE:
     conexion.status = STS_ACTIVE
-    conexion.saliente <- "CAMBIASTE TU ESTADO A ACTIVE\n"
   case STS_AWAY:
     conexion.status = STS_AWAY
-    conexion.saliente <- "CAMBIASTE TU ESTADO A AWAY\n"
   case STS_BUSY:
     conexion.status = STS_BUSY
-    conexion.saliente <- "CAMBIASTE TU ESTADO A BUSY\n"
   default:
-    conexion.saliente <- "LOS ESTADOS SON ACTIVE, AWAY, BUSY\n"
+    conexion.saliente <- "...INVALID STATUS\n"
+    conexion.saliente <- "...POSSIBLE STATUS ARE: ACTIVE, AWAY, BUSY\n"
   }
 }
 
@@ -95,9 +93,7 @@ func (conexion *Conexion) Lee() {
 	for {
     receptaculo := make([]byte, 1024)
     n, err := conexion.lector.Read(receptaculo)
-		//str, err := conexion.lector.ReadString('\n')
 		if err != nil {
-			log.Println(err)
 			break
 		}
     str := string(receptaculo[:n])
@@ -105,7 +101,6 @@ func (conexion *Conexion) Lee() {
 		conexion.entrante <- message
 	}
 	close(conexion.entrante)
-	log.Printf("Se cerró el hilo de lectura del canal entrante de %v\n", conexion.nombre)
 }
 
 /**
@@ -124,7 +119,6 @@ func (conexion *Conexion) Escribe() {
 			break
 		}
 	}
-	log.Printf("Se cerró el hilo de escritura de %v\n", conexion.nombre)
 }
 
 /**
