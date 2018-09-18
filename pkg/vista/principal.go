@@ -23,7 +23,7 @@ func SetupVentanaPrincipal() *VentanaPrincipal {
 	lb := setup_list_box()
 	scrwinusr.Add(lb)
 
-	box.Add(menubar.menubar)
+	box.Add(menubar.Menubar)
 	box.Add(grid)
 
 	grid.Attach(nb, 0, 0, 2, 2)

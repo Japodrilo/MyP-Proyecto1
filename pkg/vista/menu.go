@@ -5,11 +5,11 @@ import(
 )
 
 type MenuPrincipal struct{
-	menubar 		*gtk.MenuBar
-	conectarMI 		*gtk.MenuItem
-	desconectarMI	*gtk.MenuItem
-	invitarMI		*gtk.MenuItem
-	invitacionesMI	*gtk.MenuItem
+	Menubar 		*gtk.MenuBar
+	ConectarMI 		*gtk.MenuItem
+	DesconectarMI	*gtk.MenuItem
+	InvitarMI		*gtk.MenuItem
+	InvitacionesMI	*gtk.MenuItem
 }
 
 func SetupMenuPrincipal() *MenuPrincipal{
@@ -30,8 +30,6 @@ func SetupMenuPrincipal() *MenuPrincipal{
 	invitarMI := setup_menu_item_label("Invitar")
 	invitacionesMI := setup_menu_item_label("Invitaciones")
 
-	//conectarMI.Connect("activate", vc)
-
 	connMenu.Append(conectarMI)
 	connMenu.Append(desconectarMI)
 
@@ -42,10 +40,10 @@ func SetupMenuPrincipal() *MenuPrincipal{
 	menubar.Append(salaMI)
 
 	return &MenuPrincipal{
-		menubar: 		menubar,
-		conectarMI: 	conectarMI,
-		desconectarMI: 	desconectarMI,
-		invitarMI:		invitarMI,
-		invitacionesMI:	invitacionesMI,
+		Menubar: 		menubar,
+		ConectarMI: 	conectarMI,
+		DesconectarMI: 	desconectarMI,
+		InvitarMI:		invitarMI,
+		InvitacionesMI:	invitacionesMI,
 	}
 }
