@@ -2,6 +2,7 @@ package modelo
 
 import (
   "testing"
+  "net"
 )
 
 func TestNuevaConexion(t *testing.T) {
