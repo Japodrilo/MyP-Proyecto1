@@ -7,6 +7,10 @@ import (
 	"os"
 	"sync"
 	"github.com/Japodrilo/MyP-Proyecto1/pkg/modelo"
+	"github.com/Japodrilo/MyP-Proyecto1/pkg/controlador"
+
+
+	"github.com/gotk3/gotk3/gtk"
 )
 
 var wg sync.WaitGroup
@@ -14,10 +18,12 @@ var wg sync.WaitGroup
 /**
  * Indica al usuario cómo debe usarse el programa.
  */
+
 func uso() {
 	fmt.Println("Uso: ./cliente ip puerto")
 	os.Exit(0)
 }
+
 
 /**
  * Lee del socket y escribe en la salida estándar.
@@ -68,6 +74,12 @@ func Escribe(conn net.Conn) {
  * mediante un socket.
  */
 func main() {
+
+	gtk.Init(nil)
+
+	controlador.VentanaPrincipal()
+
+	gtk.Main()
 
 	args := os.Args[1:]
 	if len(args) != 2 {

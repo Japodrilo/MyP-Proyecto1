@@ -118,7 +118,7 @@ func (vestibulo *Vestibulo) parse(mensaje *Mensaje) (string, []string, *Conexion
     prefijo = CMD_STATUS
 	case strings.HasPrefix(mensaje.texto, CMD_TERMINAR):
     prefijo = CMD_TERMINAR
-  case mensaje.texto == CMD_USUARIOS:
+  case strings.HasPrefix(mensaje.texto, CMD_USUARIOS):
     prefijo = CMD_USUARIOS
 	}
   return prefijo, argumentos, conexion
@@ -383,7 +383,7 @@ func (vestibulo *Vestibulo) Usuarios(conexion *Conexion) {
   for usuario, _ := range(vestibulo.conexiones) {
       usuarios = usuarios + usuario + " "
   }
-  conexion.saliente <- usuarios
+  conexion.saliente <- usuarios + "\n"
   log.Printf("%v solicitó la lista de usuarios\n", conexion.nombre)
 }
 
