@@ -66,13 +66,10 @@ func (conexion *Conexion) SetStatus(estado string) {
   switch estado {
   case STS_ACTIVE:
     conexion.status = STS_ACTIVE
-    conexion.saliente <- "STATUS CHANGED TO ACTIVE\n"
   case STS_AWAY:
     conexion.status = STS_AWAY
-    conexion.saliente <- "STATUS CHANGED TO AWAY\n"
   case STS_BUSY:
     conexion.status = STS_BUSY
-    conexion.saliente <- "CAMBIASTE TU ESTADO A BUSY\n"
   default:
     conexion.saliente <- "...INVALID STATUS\n"
     conexion.saliente <- "...POSSIBLE STATUS ARE: ACTIVE, AWAY, BUSY\n"
