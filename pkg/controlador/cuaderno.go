@@ -32,7 +32,7 @@ func (cuaderno *Cuaderno) AddTab(name string) (*gtk.Entry, *gtk.TextBuffer) {
 	
 	tv.SetVExpand(true)
 
-	entry.Connect("activate", vista.MainEntryAction(entry, cuaderno.nb, cuaderno.textos))
+	//entry.Connect("activate", MainEntryAction(entry, cuaderno.nb, cuaderno.textos))
 
 	scrwin.Add(tv)
 	box.Add(entry)
@@ -48,6 +48,7 @@ func (cuaderno *Cuaderno) AddTab(name string) (*gtk.Entry, *gtk.TextBuffer) {
 
 	return entry, vista.GetBufferTV(tv)
 }
+
 
 func (cuaderno *Cuaderno) EntradaUsuario(usuario string) *gtk.Entry {
 	return cuaderno.entradas[usuario]
