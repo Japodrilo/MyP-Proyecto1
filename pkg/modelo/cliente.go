@@ -10,13 +10,15 @@ import(
 )
 
 type Cliente struct {
-	Nombre      string
-	conn 		net.Conn
-	activo		bool
-	Entrante	chan string
-	Saliente	chan string
-	lector		*bufio.Reader
-	escritor	*bufio.Writer
+	Nombre       string
+	conn 		 net.Conn
+	Conectado	 bool
+	Identificado bool
+	Activo       chan bool
+	Entrante	 chan string
+	Saliente	 chan string
+	lector		 *bufio.Reader
+	escritor	 *bufio.Writer
 }
 
 func NuevoCliente() *Cliente {
@@ -26,7 +28,9 @@ func NuevoCliente() *Cliente {
 	return &Cliente{
 		Nombre: "YO",
 		conn: conn,
-		activo: false,
+		Conectado: false,
+		Identificado: false,
+		Activo: make(chan bool),
 		Entrante: make(chan string),
 		Saliente: make(chan string),
 		lector: lector,
@@ -35,7 +39,7 @@ func NuevoCliente() *Cliente {
 }
 
 func (cliente *Cliente) Conecta(direccion, puerto string) net.Conn {
-	if cliente.activo {
+	if cliente.Conectado {
 		return cliente.conn
 	}
 	conn, err := net.Dial("tcp", direccion + ":" + puerto)
@@ -44,7 +48,7 @@ func (cliente *Cliente) Conecta(direccion, puerto string) net.Conn {
 		return nil
 	}
 	cliente.conn = conn
-	cliente.activo = true
+	cliente.Conectado = true
 	return conn
 }
 
@@ -56,7 +60,9 @@ func (cliente *Cliente) Lee(conn net.Conn) {
 	for {
 		str, err := reader.ReadString('\n')
 		if err != nil {
-			cliente.activo = false
+			cliente.Conectado = false
+			cliente.Identificado = false
+			cliente.Activo <- false
 			return
 		}
 		fmt.Print(str)
@@ -113,8 +119,10 @@ func (cliente *Cliente) Escribe2(conn net.Conn) {
 }
 
 func (cliente *Cliente) Desconecta() {
-	if cliente.activo {
+	if cliente.Conectado {
 		cliente.Saliente <- "DISCONNECT\n"
-		cliente.activo = false
+		cliente.Conectado = false
+		cliente.Identificado = false
+		cliente.Activo <- false
 	}
 }

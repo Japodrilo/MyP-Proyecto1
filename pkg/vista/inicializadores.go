@@ -1,7 +1,7 @@
 package vista
 
 import(
-	"fmt"
+	//"fmt"
 	"log"
 
 	"github.com/gotk3/gotk3/gtk"
@@ -121,6 +121,14 @@ func SetupLabel(text string) *gtk.Label {
 	return label
 }
 
+func GetLabelText(label *gtk.Label) string {
+	text, err := label.GetText()
+	if err != nil {
+		log.Fatal("Unable to get text from label:", err)
+	}
+	return text
+}
+
 func GetBufferTV(tv *gtk.TextView) *gtk.TextBuffer {
 	buffer, err := tv.GetBuffer()
 	if err != nil {
@@ -193,47 +201,4 @@ func setup_menu_item_mnemonic(text string) *gtk.MenuItem {
 		log.Fatal("Unable to create Menu Bar:", err)
 	}
 	return menuitem
-}
-
-
-
-func MainEntryAction(entry *gtk.Entry, nb *gtk.Notebook, bufferTabMap map[string]*gtk.TextBuffer) func() {
-	return func() {
-	text := GetTextEntryClean(entry)
-	if text == "\n" {
-		return
-	}
-	pn := nb.GetCurrentPage()
-	page, _ := nb.GetNthPage(pn)
-	user, _ := nb.GetTabLabelText(page)
-	q := bufferTabMap[user]
-	q.InsertAtCursor(text)
-	fmt.Print(text)
-	}
-}
-
-func SetupButtonUser(username string, nb *gtk.Notebook, bufferTabMap map[string]*gtk.TextBuffer, entry *gtk.Entry) *gtk.Button {
-	btn, err := gtk.ButtonNewWithLabel(username)
-	if err != nil {
-		log.Fatal("Unable to create button:", err)
-	}
-	btn.Connect("clicked", func() {
-		box := SetupBox()
-		scrwin := SetupScrolledWindow()
-		tv := SetupTextView()
-		tv.SetVExpand(true)
-		box.Add(entry)
-		box.Add(scrwin)
-		
-		nbTab := SetupLabel(username)
-		scrwin.Add(tv)
-		nb.AppendPage(box, nbTab)
-		nb.ShowAll()
-		btn.SetSensitive(false)
-		nb.SetCurrentPage(-1)
-		bufferTabMap[username] = GetBufferTV(tv)
-		entry.Connect("activate", MainEntryAction(entry, nb, bufferTabMap))
-		entry.GrabFocus()
-	})
-	return btn
 }

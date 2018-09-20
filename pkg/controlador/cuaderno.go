@@ -10,16 +10,22 @@ type Cuaderno struct {
 	nb 			*gtk.Notebook
 	entradas    map[string]*gtk.Entry
 	textos		map[string]*gtk.TextBuffer
+	botones		map[string]*gtk.Button
+	tabs		map[string]int
 }
 
 func NuevoCuaderno (nb *gtk.Notebook) *Cuaderno {
 	textos := make(map[string]*gtk.TextBuffer)
 	entradas := make(map[string]*gtk.Entry)
+	botones := make(map[string]*gtk.Button)
+	tabs := make(map[string]int)
 	
 	return &Cuaderno{
 		nb:			nb,
 		entradas: 	entradas,
 		textos:		textos,
+		botones:	botones,
+		tabs:		tabs,
 	}
 }
 
@@ -32,8 +38,6 @@ func (cuaderno *Cuaderno) AddTab(name string) (*gtk.Entry, *gtk.TextBuffer) {
 	
 	tv.SetVExpand(true)
 
-	//entry.Connect("activate", MainEntryAction(entry, cuaderno.nb, cuaderno.textos))
-
 	scrwin.Add(tv)
 	box.Add(entry)
 	box.Add(scrwin)
@@ -42,6 +46,7 @@ func (cuaderno *Cuaderno) AddTab(name string) (*gtk.Entry, *gtk.TextBuffer) {
 	cuaderno.nb.SetVExpand(true)
 
 	cuaderno.nb.AppendPage(box, nbTab)
+	cuaderno.tabs[name] = cuaderno.nb.GetCurrentPage()
 	cuaderno.nb.Connect("change-current-page", func() {
 		entry.GrabFocus()
 	})
