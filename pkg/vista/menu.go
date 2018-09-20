@@ -8,53 +8,79 @@ type MenuPrincipal struct{
 	Menubar 		*gtk.MenuBar
 	ConectarMI 		*gtk.MenuItem
 	DesconectarMI	*gtk.MenuItem
+	ActivoMI        *gtk.MenuItem
+	AlejadoMI       *gtk.MenuItem
+	OcupadoMI       *gtk.MenuItem
+	CerrarMI        *gtk.MenuItem
+	CrearMI         *gtk.MenuItem
 	InvitarMI		*gtk.MenuItem
 	InvitacionesMI	*gtk.MenuItem
-	CerrarMI        *gtk.MenuItem
 }
 
 func SetupMenuPrincipal() *MenuPrincipal{
-	menubar := setup_menu_bar()
+	menubar := SetupMenuBar()
 
-	connMI := setup_menu_item_mnemonic("_Conexión")
-	salaMI := setup_menu_item_mnemonic("_Sala")
-	tabsMI := setup_menu_item_mnemonic("_Pestañas")
+	connMI := SetupMenuItemMnemonic("_Conexión")
+	edosMI := SetupMenuItemMnemonic("_Estado")
+	tabsMI := SetupMenuItemMnemonic("_Pestañas")
+	salaMI := SetupMenuItemMnemonic("_Sala")
+	
 
-	connMenu := setup_menu()
-	salaMenu := setup_menu()
-	tabsMenu := setup_menu()
+	connMenu := SetupMenu()
+	edosMenu := SetupMenu()
+	tabsMenu := SetupMenu()
+	salaMenu := SetupMenu()
+	
 
 
 	connMI.SetSubmenu(connMenu)
-	salaMI.SetSubmenu(salaMenu)
+	edosMI.SetSubmenu(edosMenu)
 	tabsMI.SetSubmenu(tabsMenu)
+	salaMI.SetSubmenu(salaMenu)
+	
 
-	conectarMI := setup_menu_item_label("Conectar")
-	desconectarMI := setup_menu_item_label("Desconectar")
+	conectarMI := SetupMenuItemLabel("Conectar")
+	desconectarMI := SetupMenuItemLabel("Desconectar")
 
-	invitarMI := setup_menu_item_label("Invitar")
-	invitacionesMI := setup_menu_item_label("Invitaciones")
+	activoMI := SetupMenuItemLabel("Activo")
+	alejadoMI := SetupMenuItemLabel("Alejado")
+	ocupadoMI := SetupMenuItemLabel("Ocupado")
 
-	cerrarMI := setup_menu_item_label("Cerrar pestaña actual")
+	cerrarMI := SetupMenuItemLabel("Cerrar pestaña actual")
+
+	crearMI := SetupMenuItemLabel("Crear")
+	invitarMI := SetupMenuItemLabel("Invitar")
+	invitacionesMI := SetupMenuItemLabel("Invitaciones")
 
 	connMenu.Append(conectarMI)
 	connMenu.Append(desconectarMI)
 
-	salaMenu.Append(invitarMI)
-	salaMenu.Append(invitacionesMI)
+	edosMenu.Append(activoMI)
+	edosMenu.Append(alejadoMI)
+	edosMenu.Append(ocupadoMI)
 
 	tabsMenu.Append(cerrarMI)
 
+	salaMenu.Append(crearMI)
+	salaMenu.Append(invitarMI)
+	salaMenu.Append(invitacionesMI)
+
 	menubar.Append(connMI)
-	menubar.Append(salaMI)
+	menubar.Append(edosMI)
 	menubar.Append(tabsMI)
+	menubar.Append(salaMI)
 
 	return &MenuPrincipal{
 		Menubar: 		menubar,
 		ConectarMI: 	conectarMI,
 		DesconectarMI: 	desconectarMI,
+		ActivoMI:       activoMI,
+		AlejadoMI:      alejadoMI,
+		OcupadoMI:      ocupadoMI,
+		CerrarMI:       cerrarMI,
+		CrearMI:        crearMI,
 		InvitarMI:		invitarMI,
 		InvitacionesMI:	invitacionesMI,
-		CerrarMI:       cerrarMI,
+		
 	}
 }

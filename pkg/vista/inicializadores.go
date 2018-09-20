@@ -171,7 +171,7 @@ func SetupListBoxRow() *gtk.ListBoxRow {
 	return lbr
 }
 
-func setup_menu_bar() *gtk.MenuBar {
+func SetupMenuBar() *gtk.MenuBar {
 	menubar, err := gtk.MenuBarNew()
 	if err != nil {
 		log.Fatal("Unable to create Menu Bar:", err)
@@ -179,7 +179,7 @@ func setup_menu_bar() *gtk.MenuBar {
 	return menubar
 }
 
-func setup_menu() *gtk.Menu {
+func SetupMenu() *gtk.Menu {
 	menu, err := gtk.MenuNew()
 	if err != nil {
 		log.Fatal("Unable to create Menu:", err)
@@ -187,7 +187,7 @@ func setup_menu() *gtk.Menu {
 	return menu
 }
 
-func setup_menu_item_label(text string) *gtk.MenuItem {
+func SetupMenuItemLabel(text string) *gtk.MenuItem {
 	menuitem, err := gtk.MenuItemNewWithLabel(text)
 	if err != nil {
 		log.Fatal("Unable to create Menu Bar:", err)
@@ -195,7 +195,7 @@ func setup_menu_item_label(text string) *gtk.MenuItem {
 	return menuitem
 }
 
-func setup_menu_item_mnemonic(text string) *gtk.MenuItem {
+func SetupMenuItemMnemonic(text string) *gtk.MenuItem {
 	menuitem, err := gtk.MenuItemNewWithMnemonic(text)
 	if err != nil {
 		log.Fatal("Unable to create Menu Bar:", err)
