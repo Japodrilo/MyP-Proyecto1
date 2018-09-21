@@ -20,7 +20,7 @@ func SetupVentanaPrincipal() *VentanaPrincipal {
 	scrwinusr := SetupScrolledWindow()
 	nb := SetupNotebook()
 
-	lb := setup_list_box()
+	lb := SetupListBox()
 	scrwinusr.Add(lb)
 
 	box.Add(menubar.Menubar)

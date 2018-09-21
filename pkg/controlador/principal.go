@@ -71,6 +71,8 @@ func NuevaPrincipal() *Principal {
 	ventanaPrincipal.Menubar.CrearMI.SetSensitive(false)
 	ventanaPrincipal.Menubar.InvitarMI.Connect("activate", func () {principal. PopUpInvitar()})
 	ventanaPrincipal.Menubar.InvitarMI.SetSensitive(false)
+	ventanaPrincipal.Menubar.SalasMI.Connect("activate", func () {principal. PopUpMisSalas()})
+	ventanaPrincipal.Menubar.SalasMI.SetSensitive(false)
 	ventanaPrincipal.Menubar.CerrarMI.Connect("activate", func () {principal.eliminaPestana()})
 	principal.Escucha()
 	principal.win.ShowAll()
@@ -108,8 +110,10 @@ func (principal *Principal) ApagarTodo() {
 	for _, entrada := range principal.cuaderno.entradas {
 		entrada.SetSensitive(false)
 	}
+	principal.menu.ConectarMI.SetSensitive(true)
 	principal.menu.CrearMI.SetSensitive(false)
 	principal.menu.InvitarMI.SetSensitive(false)
+	principal.menu.SalasMI.SetSensitive(false)
 	principal.menu.ActivoMI.SetSensitive(false)
 	principal.menu.AlejadoMI.SetSensitive(false)
 	principal.menu.OcupadoMI.SetSensitive(false)
@@ -120,8 +124,10 @@ func (principal *Principal) EncenderTodo() {
 	for _, entrada := range principal.cuaderno.entradas {
 		entrada.SetSensitive(true)
 	}
+	principal.menu.ConectarMI.SetSensitive(false)
 	principal.menu.CrearMI.SetSensitive(true)
 	principal.menu.InvitarMI.SetSensitive(true)
+	principal.menu.SalasMI.SetSensitive(true)
 	principal.menu.ActivoMI.SetSensitive(true)
 	principal.menu.AlejadoMI.SetSensitive(true)
 	principal.menu.OcupadoMI.SetSensitive(true)
@@ -193,23 +199,6 @@ func PopUpConectar(cliente *modelo.Cliente) func() {
 	}
 }
 
-func PopUpIdentificarse(cliente *modelo.Cliente) {
-	emergente := vista.NuevaIdentificar()
-	emergente.IdentificarB.Connect("clicked", func() {
-		nombre := vista.GetTextEntry(emergente.Nombre)
-		cliente.Saliente <- "IDENTIFY " + nombre + "\n"
-		time.Sleep(200 * time.Millisecond)
-		if !cliente.Identificado {
-			vista.NombreOcupado()
-		} else {
-			cliente.Nombre = nombre
-			emergente.Win.Close()
-			cliente.Activo <- true
-			actualizaUsuarios(cliente)
-		}
-	})
-}
-
 func (principal *Principal) PopUpCrearSala() {
 	emergente := vista.NuevaCrear()
 	emergente.CrearB.Connect("clicked", func() {
@@ -235,16 +224,53 @@ func (principal *Principal) PopUpCrearSala() {
 	})
 }
 
-func (principal *Principal) PopUpInvitar() {
-	emergente := vista.NuevaInvitar()
-	emergente.InvitarB.Connect("clicked", func() {
-		sala := vista.GetTextEntry(emergente.SalaE)
-		args := strings.Fields(vista.GetTextEntry(emergente.NombreE))
-		if sala == "" || len(args) == 0 || args[0] == principal.cliente.Nombre {
+func (principal *Principal) PopUpMisSalas() {
+	emergente := vista.NuevaMisSalas()
+	for _, sala := range principal.salas {
+			emergente.SalaCBT.AppendText(sala)
+		}
+	emergente.AbrirB.Connect("clicked", func() {
+		sala := emergente.SalaCBT.GetActiveText()
+		pagina := principal.cuaderno.tabs["*S*-" + sala]
+		if pagina > 0 {
+			principal.cuaderno.nb.SetCurrentPage(pagina)
+			principal.cuaderno.entradas["*S*-" + sala].GrabFocus()
 			emergente.Win.Close()
 			return
 		}
-		nombre := args[0]
+		principal.AddTab("*S*-" + sala)
+		emergente.Win.Close()
+	})
+}
+
+func PopUpIdentificarse(cliente *modelo.Cliente) {
+	emergente := vista.NuevaIdentificar()
+	emergente.IdentificarB.Connect("clicked", func() {
+		nombre := vista.GetTextEntry(emergente.Nombre)
+		cliente.Saliente <- "IDENTIFY " + nombre + "\n"
+		time.Sleep(200 * time.Millisecond)
+		if !cliente.Identificado {
+			vista.NombreOcupado()
+		} else {
+			cliente.Nombre = nombre
+			emergente.Win.Close()
+			cliente.Activo <- true
+			actualizaUsuarios(cliente)
+		}
+	})
+}
+
+func (principal *Principal) PopUpInvitar() {
+	emergente := vista.NuevaInvitar()
+	for usuario, _ := range principal.renglones {
+		emergente.NombreCBT.AppendText(usuario)
+	}
+	for _, sala := range principal.salas {
+		emergente.SalaCBT.AppendText(sala)
+	}
+	emergente.InvitarB.Connect("clicked", func() {
+		sala := emergente.SalaCBT.GetActiveText()
+		nombre := emergente.NombreCBT.GetActiveText()
 		principal.cliente.Saliente <- "INVITE " + sala + " " + nombre + "\n"
 		time.Sleep(400 * time.Millisecond)
 		select{
@@ -297,7 +323,7 @@ func (principal *Principal) parse(mensaje string) (string, []string) {
     	prefijo = "INVITATION_JOIN"
     case (strings.HasPrefix(mensaje, "...USER") && strings.HasSuffix(mensaje, " NOT FOUND\n")):
     	prefijo = "INVITATION_NOT_OK"
-    case mensaje == "...ROOM NOT EXISTS\n":
+    case mensaje == "...ROOM NOT EXIST\n":
     	prefijo = "NO_ROOM"
     case mensaje == "...YOU ARE NOT THE OWNER OF THE ROOM\n":
     	prefijo = "NOT_OWNER"

@@ -11,7 +11,7 @@ type Crear struct {
 }
 
 func NuevaCrear() *Crear {
-	win := SetupPopupWindow("Crear Sala", 310, 90)
+	win := SetupPopupWindow("Crear Sala", 300, 90)
 	grid := SetupGrid(gtk.ORIENTATION_VERTICAL)
 
 	esquina := SetupLabel("    ")
@@ -132,29 +132,34 @@ func EntrarSala() {
 }
 
 type Invitar struct {
-	Win      *gtk.Window
-	SalaE    *gtk.Entry
-	NombreE  *gtk.Entry
-	InvitarB *gtk.Button
+	Win       *gtk.Window
+	SalaCBT   *gtk.ComboBoxText
+	NombreCBT *gtk.ComboBoxText
+	InvitarB  *gtk.Button
 }
 
 func NuevaInvitar() *Invitar {
 	win := SetupPopupWindow("Invitar", 245, 115)
 	grid := SetupGrid(gtk.ORIENTATION_VERTICAL)
 
-	esquina := SetupLabel("    ")
+	esquinaNW := SetupLabel("    ")
 	salaL := SetupLabel("Sala:")
-	salaE := SetupEntry()
+	salaCBT := SetupComboBoxText()
 	nombreL := SetupLabel("Usuario:")
-	nombreE := SetupEntry()
+	nombreCBT := SetupComboBoxText()
+	esquinaSE := SetupLabel("    ")
+
+	salaCBT.SetHExpand(true)
+	nombreCBT.SetHExpand(true)
 
 	invitar := SetupButton("Invitar")
 
-	grid.Add(esquina)
+	grid.Add(esquinaNW)
 	grid.Attach(salaL, 1, 1, 1, 1)
 	grid.Attach(nombreL, 1, 2, 1, 1)
-	grid.Attach(salaE, 2, 1, 1, 1)
-	grid.Attach(nombreE, 2, 2, 1, 1)
+	grid.Attach(salaCBT, 2, 1, 1, 1)
+	grid.Attach(nombreCBT, 2, 2, 1, 1)
+	grid.Attach(esquinaSE, 3, 3, 1, 1)
 
 	grid.Attach(invitar, 1, 3, 2, 1)
 
@@ -163,8 +168,44 @@ func NuevaInvitar() *Invitar {
 
 	return &Invitar{
 		Win: win,
-		SalaE: salaE,
-		NombreE: nombreE,
+		SalaCBT: salaCBT,
+		NombreCBT: nombreCBT,
 		InvitarB: invitar,
+	}
+}
+
+type MisSalas struct {
+	Win     *gtk.Window
+	SalaCBT *gtk.ComboBoxText
+	AbrirB  *gtk.Button
+}
+
+func NuevaMisSalas() *MisSalas {
+	win := SetupPopupWindow("Mis salas", 300, 100)
+	grid := SetupGrid(gtk.ORIENTATION_VERTICAL)
+
+	esquinaNW := SetupLabel("    ")
+	salaL := SetupLabel("Sala:")
+	salaCBT := SetupComboBoxText()
+	esquinaSE := SetupLabel("    ")
+
+	salaCBT.SetHExpand(true)
+
+	abrir := SetupButton("Abrir conversación")
+
+	grid.Add(esquinaNW)
+	grid.Attach(salaL, 1, 1, 1, 1)
+	grid.Attach(salaCBT, 2, 1, 1, 1)
+	grid.Attach(esquinaSE, 3, 2, 1, 1)
+
+	grid.Attach(abrir, 1, 3, 2, 1)
+
+	win.Add(grid)
+	win.ShowAll()
+
+	return &MisSalas{
+		Win: win,
+		SalaCBT: salaCBT,
+		AbrirB: abrir,
 	}
 }

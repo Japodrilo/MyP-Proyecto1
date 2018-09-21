@@ -11,7 +11,7 @@ type Identificar struct {
 }
 
 func NuevaIdentificar() *Identificar {
-	win := SetupPopupWindow("Identifícate", 335, 90)
+	win := SetupPopupWindow("Identifícate", 330, 90)
 	grid := SetupGrid(gtk.ORIENTATION_VERTICAL)
 
 	esquina := SetupLabel("    ")

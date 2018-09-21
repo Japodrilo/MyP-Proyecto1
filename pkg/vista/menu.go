@@ -5,16 +5,16 @@ import(
 )
 
 type MenuPrincipal struct{
-	Menubar 		*gtk.MenuBar
-	ConectarMI 		*gtk.MenuItem
-	DesconectarMI	*gtk.MenuItem
-	ActivoMI        *gtk.MenuItem
-	AlejadoMI       *gtk.MenuItem
-	OcupadoMI       *gtk.MenuItem
-	CerrarMI        *gtk.MenuItem
-	CrearMI         *gtk.MenuItem
-	InvitarMI		*gtk.MenuItem
-	InvitacionesMI	*gtk.MenuItem
+	Menubar 	  *gtk.MenuBar
+	ConectarMI    *gtk.MenuItem
+	DesconectarMI *gtk.MenuItem
+	ActivoMI      *gtk.MenuItem
+	AlejadoMI     *gtk.MenuItem
+	OcupadoMI     *gtk.MenuItem
+	CerrarMI      *gtk.MenuItem
+	CrearMI       *gtk.MenuItem
+	InvitarMI     *gtk.MenuItem
+	SalasMI	      *gtk.MenuItem
 }
 
 func SetupMenuPrincipal() *MenuPrincipal{
@@ -50,7 +50,7 @@ func SetupMenuPrincipal() *MenuPrincipal{
 
 	crearMI := SetupMenuItemLabel("Crear")
 	invitarMI := SetupMenuItemLabel("Invitar")
-	invitacionesMI := SetupMenuItemLabel("Invitaciones")
+	salasMI := SetupMenuItemLabel("Mis salas")
 
 	connMenu.Append(conectarMI)
 	connMenu.Append(desconectarMI)
@@ -63,7 +63,7 @@ func SetupMenuPrincipal() *MenuPrincipal{
 
 	salaMenu.Append(crearMI)
 	salaMenu.Append(invitarMI)
-	salaMenu.Append(invitacionesMI)
+	salaMenu.Append(salasMI)
 
 	menubar.Append(connMI)
 	menubar.Append(edosMI)
@@ -71,16 +71,16 @@ func SetupMenuPrincipal() *MenuPrincipal{
 	menubar.Append(salaMI)
 
 	return &MenuPrincipal{
-		Menubar: 		menubar,
-		ConectarMI: 	conectarMI,
-		DesconectarMI: 	desconectarMI,
-		ActivoMI:       activoMI,
-		AlejadoMI:      alejadoMI,
-		OcupadoMI:      ocupadoMI,
-		CerrarMI:       cerrarMI,
-		CrearMI:        crearMI,
-		InvitarMI:		invitarMI,
-		InvitacionesMI:	invitacionesMI,
+		Menubar:       menubar,
+		ConectarMI:    conectarMI,
+		DesconectarMI: desconectarMI,
+		ActivoMI:      activoMI,
+		AlejadoMI:     alejadoMI,
+		OcupadoMI:     ocupadoMI,
+		CerrarMI:      cerrarMI,
+		CrearMI:       crearMI,
+		InvitarMI:     invitarMI,
+		SalasMI:       salasMI,
 		
 	}
 }
