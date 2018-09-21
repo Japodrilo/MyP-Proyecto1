@@ -1,39 +1,52 @@
 package vista
 
 import(
-	//"fmt"
 	"log"
 
 	"github.com/gotk3/gotk3/gtk"
 )
 
 
-func SetupWindow(title string) *gtk.Window {
-	win, err := gtk.WindowNew(gtk.WINDOW_TOPLEVEL)
+func GetBufferTV(tv *gtk.TextView) *gtk.TextBuffer {
+	buffer, err := tv.GetBuffer()
 	if err != nil {
-		log.Fatal("Unable to create window:", err)
+		log.Fatal("Unable to get buffer:", err)
 	}
-	win.SetTitle(title)
-	win.Connect("destroy", func() {
-		gtk.MainQuit()
-	})
-	win.SetDefaultSize(800, 600)
-	win.SetPosition(gtk.WIN_POS_CENTER)
-	return win
+	return buffer
 }
 
-func SetupPopupWindow(title string, width, height int) *gtk.Window {
-	win, err := gtk.WindowNew(gtk.WINDOW_TOPLEVEL)
+func GetBufferEntry(entry *gtk.Entry) *gtk.EntryBuffer {
+	buffer, err := entry.GetBuffer()
 	if err != nil {
-		log.Fatal("Unable to create window:", err)
+		log.Fatal("Unable to get buffer:", err)
 	}
-	win.SetTitle(title)
-	win.Connect("destroy", func() {
-		win.Close()
-	})
-	win.SetDefaultSize(width, height)
-	win.SetPosition(gtk.WIN_POS_CENTER)
-	return win
+	return buffer
+}
+
+func GetLabelText(label *gtk.Label) string {
+	text, err := label.GetText()
+	if err != nil {
+		log.Fatal("Unable to get text from label:", err)
+	}
+	return text
+}
+
+func GetTextEntry(entry *gtk.Entry) string {
+	text, err := entry.GetText()
+	if err != nil {
+		log.Fatal("Unable to get text from buffer:", err)
+	}
+	return text
+}
+
+func GetTextEntryClean(entry *gtk.Entry) string {
+	text, err := entry.GetText()
+	if err != nil {
+		log.Fatal("Unable to get text from buffer:", err)
+	}
+	buffer := GetBufferEntry(entry)
+	buffer.DeleteText(0,-1)
+	return text + "\n"
 }
 
 func SetupBox() *gtk.Box {
@@ -43,52 +56,6 @@ func SetupBox() *gtk.Box {
 	}
 	box.SetHomogeneous(false)
 	return box
-}
-
-func SetupNotebook() *gtk.Notebook {
-	nb, err := gtk.NotebookNew()
-	if err != nil {
-		log.Fatal("Unable to create notebook:", err)
-	}
-	return nb
-}
-
-func SetupScrolledWindow() *gtk.ScrolledWindow {
-	scrwin, err := gtk.ScrolledWindowNew(nil, nil)
-	if err != nil {
-		log.Fatal("Unable to create scrolled window:", err)
-	}
-	scrwin.SetPolicy(1,1)
-	scrwin.SetHExpand(true)
-	return scrwin
-}
-
-func SetupGrid(orient gtk.Orientation) *gtk.Grid {
-	grid, err := gtk.GridNew()
-	if err != nil {
-		log.Fatal("Unable to create grid:", err)
-	}
-	grid.SetOrientation(orient)
-	return grid
-}
-
-func SetupTextView() *gtk.TextView {
-	tv, err := gtk.TextViewNew()
-	if err != nil {
-		log.Fatal("Unable to create TextView:", err)
-	}
-	tv.SetWrapMode(2)
-	tv.SetEditable(false)
-	tv.SetCursorVisible(false)
-	return tv
-}
-
-func SetupEntry() *gtk.Entry {
-	entry, err := gtk.EntryNew()
-	if err != nil {
-		log.Fatal("Unable to create Entry:", err)
-	}
-	return entry
 }
 
 func SetupButton(label string) *gtk.Button {
@@ -105,12 +72,29 @@ func SetupButtonClick(label string, onClick func()) *gtk.Button {
 	return btn
 }
 
-func setup_list_box() *gtk.ListBox {
-	lb, err := gtk.ListBoxNew()
+func SetupComboBoxText() *gtk.ComboBoxText {
+	cb, err := gtk.ComboBoxTextNew()
 	if err != nil {
-		log.Fatal("Unable to create ListBox:", err)
+		log.Fatal("Unable to create Combo Box:", err)
 	}
-	return lb
+	return cb
+}
+
+func SetupEntry() *gtk.Entry {
+	entry, err := gtk.EntryNew()
+	if err != nil {
+		log.Fatal("Unable to create Entry:", err)
+	}
+	return entry
+}
+
+func SetupGrid(orient gtk.Orientation) *gtk.Grid {
+	grid, err := gtk.GridNew()
+	if err != nil {
+		log.Fatal("Unable to create grid:", err)
+	}
+	grid.SetOrientation(orient)
+	return grid
 }
 
 func SetupLabel(text string) *gtk.Label {
@@ -121,46 +105,12 @@ func SetupLabel(text string) *gtk.Label {
 	return label
 }
 
-func GetLabelText(label *gtk.Label) string {
-	text, err := label.GetText()
+func SetupListBox() *gtk.ListBox {
+	lb, err := gtk.ListBoxNew()
 	if err != nil {
-		log.Fatal("Unable to get text from label:", err)
+		log.Fatal("Unable to create ListBox:", err)
 	}
-	return text
-}
-
-func GetBufferTV(tv *gtk.TextView) *gtk.TextBuffer {
-	buffer, err := tv.GetBuffer()
-	if err != nil {
-		log.Fatal("Unable to get buffer:", err)
-	}
-	return buffer
-}
-
-func get_buffer_from_entry(entry *gtk.Entry) *gtk.EntryBuffer {
-	buffer, err := entry.GetBuffer()
-	if err != nil {
-		log.Fatal("Unable to get buffer:", err)
-	}
-	return buffer
-}
-
-func GetTextEntry(entry *gtk.Entry) string {
-	text, err := entry.GetText()
-	if err != nil {
-		log.Fatal("Unable to get text from buffer:", err)
-	}
-	return text
-}
-
-func GetTextEntryClean(entry *gtk.Entry) string {
-	text, err := entry.GetText()
-	if err != nil {
-		log.Fatal("Unable to get text from buffer:", err)
-	}
-	buffer := get_buffer_from_entry(entry)
-	buffer.DeleteText(0,-1)
-	return text + "\n"
+	return lb
 }
 
 func SetupListBoxRow() *gtk.ListBoxRow {
@@ -171,20 +121,20 @@ func SetupListBoxRow() *gtk.ListBoxRow {
 	return lbr
 }
 
-func SetupMenuBar() *gtk.MenuBar {
-	menubar, err := gtk.MenuBarNew()
-	if err != nil {
-		log.Fatal("Unable to create Menu Bar:", err)
-	}
-	return menubar
-}
-
 func SetupMenu() *gtk.Menu {
 	menu, err := gtk.MenuNew()
 	if err != nil {
 		log.Fatal("Unable to create Menu:", err)
 	}
 	return menu
+}
+
+func SetupMenuBar() *gtk.MenuBar {
+	menubar, err := gtk.MenuBarNew()
+	if err != nil {
+		log.Fatal("Unable to create Menu Bar:", err)
+	}
+	return menubar
 }
 
 func SetupMenuItemLabel(text string) *gtk.MenuItem {
@@ -201,4 +151,61 @@ func SetupMenuItemMnemonic(text string) *gtk.MenuItem {
 		log.Fatal("Unable to create Menu Bar:", err)
 	}
 	return menuitem
+}
+
+func SetupNotebook() *gtk.Notebook {
+	nb, err := gtk.NotebookNew()
+	if err != nil {
+		log.Fatal("Unable to create notebook:", err)
+	}
+	return nb
+}
+
+func SetupPopupWindow(title string, width, height int) *gtk.Window {
+	win, err := gtk.WindowNew(gtk.WINDOW_TOPLEVEL)
+	if err != nil {
+		log.Fatal("Unable to create window:", err)
+	}
+	win.SetTitle(title)
+	win.Connect("destroy", func() {
+		win.Close()
+	})
+	win.SetDefaultSize(width, height)
+	win.SetPosition(gtk.WIN_POS_CENTER)
+	return win
+}
+
+func SetupScrolledWindow() *gtk.ScrolledWindow {
+	scrwin, err := gtk.ScrolledWindowNew(nil, nil)
+	if err != nil {
+		log.Fatal("Unable to create scrolled window:", err)
+	}
+	scrwin.SetPolicy(1,1)
+	scrwin.SetHExpand(true)
+	return scrwin
+}
+
+func SetupTextView() *gtk.TextView {
+	tv, err := gtk.TextViewNew()
+	if err != nil {
+		log.Fatal("Unable to create TextView:", err)
+	}
+	tv.SetWrapMode(2)
+	tv.SetEditable(false)
+	tv.SetCursorVisible(false)
+	return tv
+}
+
+func SetupWindow(title string) *gtk.Window {
+	win, err := gtk.WindowNew(gtk.WINDOW_TOPLEVEL)
+	if err != nil {
+		log.Fatal("Unable to create window:", err)
+	}
+	win.SetTitle(title)
+	win.Connect("destroy", func() {
+		gtk.MainQuit()
+	})
+	win.SetDefaultSize(800, 600)
+	win.SetPosition(gtk.WIN_POS_CENTER)
+	return win
 }
