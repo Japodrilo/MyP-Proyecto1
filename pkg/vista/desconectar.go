@@ -10,7 +10,7 @@ type Desconectar struct {
 }
 
 func NuevaDesconectar() *Desconectar {
-	win := SetupPopupWindow("Desconectar", 500, 48)
+	win := SetupPopupWindow("Desconectar", 345, 48)
 	box := SetupBox()
 	grid := SetupGrid(gtk.ORIENTATION_HORIZONTAL)
 	mensaje := SetupLabel("¿Deseas terminar tu conexión con el servidor?")
