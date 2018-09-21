@@ -11,7 +11,7 @@ type Crear struct {
 }
 
 func NuevaCrear() *Crear {
-	win := SetupPopupWindow("Crear Sala", 300, 90)
+	win := SetupPopupWindow("Crear Sala", 310, 90)
 	grid := SetupGrid(gtk.ORIENTATION_VERTICAL)
 
 	esquina := SetupLabel("    ")
@@ -37,10 +37,86 @@ func NuevaCrear() *Crear {
 }
 
 func NombreSalaOcupado() {
-	win := SetupPopupWindow("Nombre ocupado", 400, 48)
+	win := SetupPopupWindow("Nombre ocupado", 250, 48)
 	box := SetupBox()
 	grid := SetupGrid(gtk.ORIENTATION_HORIZONTAL)
 	mensaje := SetupLabel("Nombre ocupado, intenta nuevamente")
+	espacio1 := SetupLabel("    ")
+	espacio1.SetHExpand(true)
+	espacio2 := SetupLabel("    ")
+	espacio2.SetHExpand(true)
+	desconectar := SetupButtonClick("Cerrar", func() {win.Close()})
+	box.Add(mensaje)
+	grid.Add(espacio1)
+	grid.Add(desconectar)
+	grid.Add(espacio2)
+	box.Add(grid)
+	win.Add(box)
+	win.ShowAll()
+}
+
+func SalaInexistente() {
+	win := SetupPopupWindow("Sala Inexistente", 250, 48)
+	box := SetupBox()
+	grid := SetupGrid(gtk.ORIENTATION_HORIZONTAL)
+	mensaje := SetupLabel("No existe esa sala")
+	espacio1 := SetupLabel("    ")
+	espacio1.SetHExpand(true)
+	espacio2 := SetupLabel("    ")
+	espacio2.SetHExpand(true)
+	desconectar := SetupButtonClick("Cerrar", func() {win.Close()})
+	box.Add(mensaje)
+	grid.Add(espacio1)
+	grid.Add(desconectar)
+	grid.Add(espacio2)
+	box.Add(grid)
+	win.Add(box)
+	win.ShowAll()
+}
+
+func NoTePertenece() {
+	win := SetupPopupWindow("Ella no te pertenece", 270, 48)
+	box := SetupBox()
+	grid := SetupGrid(gtk.ORIENTATION_HORIZONTAL)
+	mensaje := SetupLabel("No eres el dueño de la sala")
+	espacio1 := SetupLabel("    ")
+	espacio1.SetHExpand(true)
+	espacio2 := SetupLabel("    ")
+	espacio2.SetHExpand(true)
+	desconectar := SetupButtonClick("Cerrar", func() {win.Close()})
+	box.Add(mensaje)
+	grid.Add(espacio1)
+	grid.Add(desconectar)
+	grid.Add(espacio2)
+	box.Add(grid)
+	win.Add(box)
+	win.ShowAll()
+}
+
+func UsuarioInexistente() {
+	win := SetupPopupWindow("Usuario Inexistente", 250, 48)
+	box := SetupBox()
+	grid := SetupGrid(gtk.ORIENTATION_HORIZONTAL)
+	mensaje := SetupLabel("No existe ese usuario")
+	espacio1 := SetupLabel("    ")
+	espacio1.SetHExpand(true)
+	espacio2 := SetupLabel("    ")
+	espacio2.SetHExpand(true)
+	desconectar := SetupButtonClick("Cerrar", func() {win.Close()})
+	box.Add(mensaje)
+	grid.Add(espacio1)
+	grid.Add(desconectar)
+	grid.Add(espacio2)
+	box.Add(grid)
+	win.Add(box)
+	win.ShowAll()
+}
+
+func EntrarSala() {
+	win := SetupPopupWindow("Unirse a sala", 250, 48)
+	box := SetupBox()
+	grid := SetupGrid(gtk.ORIENTATION_HORIZONTAL)
+	mensaje := SetupLabel("No existe ese usuario")
 	espacio1 := SetupLabel("    ")
 	espacio1.SetHExpand(true)
 	espacio2 := SetupLabel("    ")

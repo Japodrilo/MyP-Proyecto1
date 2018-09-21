@@ -14,12 +14,15 @@ import(
 )
 
 type Principal struct {
-	cliente     *modelo.Cliente
-	win			*gtk.Window
-	cuaderno	*Cuaderno
-	lb			*gtk.ListBox
-	renglones   map[string]*gtk.ListBoxRow
-	salas       chan bool
+	cliente      *modelo.Cliente
+	win			 *gtk.Window
+	cuaderno	 *Cuaderno
+	lb			 *gtk.ListBox
+	menu         *vista.MenuPrincipal
+	renglones    map[string]*gtk.ListBoxRow
+	canalSalas   chan int
+	salas        []string
+	invitaciones []string
 }
 
 func NuevaPrincipal() *Principal {
@@ -27,7 +30,8 @@ func NuevaPrincipal() *Principal {
 	ventanaPrincipal := vista.SetupVentanaPrincipal()
 	cuaderno := NuevoCuaderno(ventanaPrincipal.Nb)
 	renglones := make (map[string]*gtk.ListBoxRow)
-	salas := make(chan bool)
+	canalSalas := make(chan int)
+	salas := make([]string, 0)
 
 	cuaderno.entradas["General"], cuaderno.textos["General"] = cuaderno.AddTab("General")
 	cuaderno.entradas["General"].Connect("activate", MainEntryAction(cuaderno, cliente))
@@ -35,6 +39,7 @@ func NuevaPrincipal() *Principal {
 
 	ventanaPrincipal.Menubar.ConectarMI.Connect("activate", PopUpConectar(cliente))
 	ventanaPrincipal.Menubar.DesconectarMI.Connect("activate", PopUpDesconectar(cliente))
+	ventanaPrincipal.Menubar.DesconectarMI.SetSensitive(false)
 
 	ventanaPrincipal.Menubar.ActivoMI.Connect("activate", func () {
 		glib.IdleAdd(ventanaPrincipal.Win.SetTitle, "Chat")
@@ -48,18 +53,24 @@ func NuevaPrincipal() *Principal {
 		glib.IdleAdd(ventanaPrincipal.Win.SetTitle, "Chat (OCUPADO)")
 		cliente.Saliente <- "STATUS BUSY\n"
 		})
+	ventanaPrincipal.Menubar.ActivoMI.SetSensitive(false)
+	ventanaPrincipal.Menubar.AlejadoMI.SetSensitive(false)
+	ventanaPrincipal.Menubar.OcupadoMI.SetSensitive(false)
 
 	principal := &Principal{
 		cliente:    cliente,
 		win:		ventanaPrincipal.Win,
 		cuaderno:	cuaderno,
 		lb:			ventanaPrincipal.Lb,
+		menu:       ventanaPrincipal.Menubar,
 		renglones:  renglones,
+		canalSalas: canalSalas,
 		salas:      salas,
 	}
-	//desactivarlos hasta que el servidor esté activo
 	ventanaPrincipal.Menubar.CrearMI.Connect("activate", func () {principal. PopUpCrearSala()})
+	ventanaPrincipal.Menubar.CrearMI.SetSensitive(false)
 	ventanaPrincipal.Menubar.InvitarMI.Connect("activate", func () {principal. PopUpInvitar()})
+	ventanaPrincipal.Menubar.InvitarMI.SetSensitive(false)
 	ventanaPrincipal.Menubar.CerrarMI.Connect("activate", func () {principal.eliminaPestana()})
 	principal.Escucha()
 	principal.win.ShowAll()
@@ -75,27 +86,48 @@ func (principal *Principal) Escucha() {
 
 			case estado := <- principal.cliente.Activo:
 				if estado {
-					for _, entrada := range principal.cuaderno.entradas {
-						entrada.SetSensitive(true)
-					}
+					principal.EncenderTodo()
 				} else {
-					principal.win.SetTitle("Chat")
-					i := 0
-					boton := principal.lb.GetRowAtIndex(i)
-					for boton != nil {
-						glib.IdleAdd(principal.lb.Remove, boton)
-						i++
-						boton = principal.lb.GetRowAtIndex(i)
-						principal.cuaderno.botones = make(map [string]*gtk.Button)
-					}
-					for _, entrada := range principal.cuaderno.entradas {
-						entrada.SetSensitive(false)
-					}
+					principal.ApagarTodo()
 				}
 			}
 		}
 	}()
 }
+
+func (principal *Principal) ApagarTodo() {
+	principal.win.SetTitle("Chat")
+	i := 0
+	boton := principal.lb.GetRowAtIndex(i)
+	for boton != nil {
+		glib.IdleAdd(principal.lb.Remove, boton)
+		i++
+		boton = principal.lb.GetRowAtIndex(i)
+		principal.cuaderno.botones = make(map [string]*gtk.Button)
+	}
+	for _, entrada := range principal.cuaderno.entradas {
+		entrada.SetSensitive(false)
+	}
+	principal.menu.CrearMI.SetSensitive(false)
+	principal.menu.InvitarMI.SetSensitive(false)
+	principal.menu.ActivoMI.SetSensitive(false)
+	principal.menu.AlejadoMI.SetSensitive(false)
+	principal.menu.OcupadoMI.SetSensitive(false)
+	principal.menu.DesconectarMI.SetSensitive(false)
+}
+
+func (principal *Principal) EncenderTodo() {
+	for _, entrada := range principal.cuaderno.entradas {
+		entrada.SetSensitive(true)
+	}
+	principal.menu.CrearMI.SetSensitive(true)
+	principal.menu.InvitarMI.SetSensitive(true)
+	principal.menu.ActivoMI.SetSensitive(true)
+	principal.menu.AlejadoMI.SetSensitive(true)
+	principal.menu.OcupadoMI.SetSensitive(true)
+	principal.menu.DesconectarMI.SetSensitive(true)
+}
+
 
 func (principal *Principal) AddUserButton(username string) {
 	if principal.cuaderno.botones[username] != nil || principal.cliente.Nombre == username {
@@ -184,12 +216,19 @@ func (principal *Principal) PopUpCrearSala() {
 		nombre := vista.GetTextEntry(emergente.Nombre)
 		principal.cliente.Saliente <- "CREATEROOM " + nombre + "\n"
 		time.Sleep(400 * time.Millisecond)
+		if nombre == "" {
+			emergente.Win.Close()
+			return	
+		}
 		select{
-			case b := <- principal.salas:
-				if b {
+			case i := <- principal.canalSalas:
+				switch i {
+				case 0: 
+					glib.IdleAdd(principal.AddTab, "*S*-" + nombre)
+					principal.salas = append(principal.salas, nombre)
 					emergente.Win.Close()
 					return
-				} else {
+				case 1: 
 					vista.NombreSalaOcupado()
 				}
 		}
@@ -200,16 +239,26 @@ func (principal *Principal) PopUpInvitar() {
 	emergente := vista.NuevaInvitar()
 	emergente.InvitarB.Connect("clicked", func() {
 		sala := vista.GetTextEntry(emergente.SalaE)
-		nombre := strings.Fields(vista.GetTextEntry(emergente.NombreE))[0]
+		args := strings.Fields(vista.GetTextEntry(emergente.NombreE))
+		if sala == "" || len(args) == 0 || args[0] == principal.cliente.Nombre {
+			emergente.Win.Close()
+			return
+		}
+		nombre := args[0]
 		principal.cliente.Saliente <- "INVITE " + sala + " " + nombre + "\n"
 		time.Sleep(400 * time.Millisecond)
 		select{
-			case b := <- principal.salas:
-				if b {
+			case i := <- principal.canalSalas:
+				switch i {
+				case 0:
 					emergente.Win.Close()
 					return
-				} else {
-					vista.NombreSalaOcupado()
+				case 1:
+					vista.UsuarioInexistente()
+				case 2:
+					vista.SalaInexistente()
+				case 3:
+					vista.NoTePertenece()
 				}
 		}
 	})
@@ -240,12 +289,18 @@ func contiene(rebanada []string, cadena string) bool {
 }
 
 
-func parse(mensaje string) (string, []string) {
+func (principal *Principal) parse(mensaje string) (string, []string) {
 	prefijo := ""
 	argumentos := strings.Fields(mensaje)
     switch {
-    case strings.HasPrefix(mensaje, "...USER") && strings.HasSuffix(mensaje, " NOT FOUND\n"):
+    case strings.HasPrefix(mensaje, "...INVITATION TO JOIN"):
+    	prefijo = "INVITATION_JOIN"
+    case (strings.HasPrefix(mensaje, "...USER") && strings.HasSuffix(mensaje, " NOT FOUND\n")):
     	prefijo = "INVITATION_NOT_OK"
+    case mensaje == "...ROOM NOT EXISTS\n":
+    	prefijo = "NO_ROOM"
+    case mensaje == "...YOU ARE NOT THE OWNER OF THE ROOM\n":
+    	prefijo = "NOT_OWNER"
     case strings.HasPrefix(mensaje, "...INVITATION SENT TO"):
     	prefijo = "INVITATION_OK"
     case len(argumentos) == 2 && (argumentos[1] == "ACTIVE" || argumentos[1] == "AWAY" || argumentos[1] == "BUSY"):
@@ -258,9 +313,14 @@ func parse(mensaje string) (string, []string) {
     	prefijo = "ROOM_NOT_OK"
 	case strings.HasPrefix(mensaje, "...PUBLIC-"):
     	prefijo = "PUBLIC"
+    case strings.HasPrefix(mensaje, "..."):
+    	for _, sala := range principal.salas {
+    		if strings.HasPrefix(mensaje, "..." + sala + "-") {
+    			prefijo = "SALA"
+    		}
+    	}
     case strings.HasSuffix(argumentos[0], ":"):
     	prefijo = "DIRECTO"
-    case strings.HasPrefix(mensaje, "..."):
     default:
     	prefijo = "USERS"
 	}
@@ -268,7 +328,7 @@ func parse(mensaje string) (string, []string) {
 }
 
 func (principal *Principal) manejaEntrada(mensaje string) {
-	prefijo, argumentos := parse(mensaje)
+	prefijo, argumentos := principal.parse(mensaje)
 	switch prefijo {
 	case "":
 		return
@@ -286,6 +346,21 @@ func (principal *Principal) manejaEntrada(mensaje string) {
 			time.Sleep(100 * time.Millisecond)
 		}
 		principal.cuaderno.textos[nombre].InsertAtCursor(mensaje)
+	case "SALA":
+		sala := ""
+		for _, s := range principal.salas {
+    		if strings.HasPrefix(mensaje, "..." + s + "-") {
+    			sala = s
+    		}
+    	}
+    	nombre := strings.TrimPrefix(argumentos[0], "..." + sala + "-")
+    	mensaje := strings.Join(argumentos[1:], " ")
+    	mensaje = fmt.Sprintf("%v %v\n", nombre, mensaje)
+    	if principal.cuaderno.textos["*S*-" + sala] == nil {
+    		glib.IdleAdd(principal.AddTab, "*S*-" + sala)
+    		time.Sleep(100 * time.Millisecond)
+    	}
+    	principal.cuaderno.textos["*S*-" + sala].InsertAtCursor(mensaje)
 	case "USERS":
 		for _, usuario := range argumentos {
 			glib.IdleAdd(principal.AddUserButton, usuario)
@@ -301,9 +376,9 @@ func (principal *Principal) manejaEntrada(mensaje string) {
 		principal.cliente.Identificado = true
 		time.Sleep(400 * time.Millisecond)
 	case "ROOM_OK":
-		principal.salas <- true
+		principal.canalSalas <- 0
 	case "ROOM_NOT_OK":
-		principal.salas <- false
+		principal.canalSalas <- 1
 	case "STATUS":
 		notificacion := "\nEl usuario %s está %s\n\n"
 		switch argumentos[1] {
@@ -318,9 +393,18 @@ func (principal *Principal) manejaEntrada(mensaje string) {
 			principal.cuaderno.textos["General"].InsertAtCursor(notificacion)
 		}
 	case "INVITATION_OK":
-		principal.salas <- true
+		principal.canalSalas <- 0
 	case "INVITATION_NOT_OK":
-		principal.salas <- false
+		principal.canalSalas <- 1
+	case "NO_ROOM":
+		principal.canalSalas <- 2
+	case "NOT_OWNER":
+		principal.canalSalas <- 3
+	case "INVITATION_JOIN":
+		principal.cliente.Saliente <- "JOINROOM " + argumentos[3] + "\n"
+		principal.salas = append(principal.salas, argumentos[3])
+		glib.IdleAdd(principal.AddTab, "*S*-" + argumentos[3])
+
 	}
 }
 
@@ -363,9 +447,12 @@ func MainEntryAction(cuaderno *Cuaderno, cliente *modelo.Cliente) func() {
 		q := cuaderno.textos[user]
 		fmt.Print(text)
 		q.InsertAtCursor(cliente.Nombre + ": " + text)
-		switch user {
-		case "General":
+		switch {
+		case user == "General":
 			cliente.Saliente <- "PUBLICMESSAGE " + text
+		case strings.HasPrefix(user, "*S*-"):
+			user = strings.TrimPrefix(user, "*S*-")
+			cliente.Saliente <- fmt.Sprintf("ROOMESSAGE %v %v", user, text)
 		default:
 			cliente.Saliente <- "MESSAGE " + user + " " + text
 		}
