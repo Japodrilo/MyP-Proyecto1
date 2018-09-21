@@ -7,6 +7,7 @@ import(
 	//"log"
 	"os"
 	"net"
+	"time"
 )
 
 type Cliente struct {
@@ -42,7 +43,7 @@ func (cliente *Cliente) Conecta(direccion, puerto string) net.Conn {
 	if cliente.Conectado {
 		return cliente.conn
 	}
-	conn, err := net.Dial("tcp", direccion + ":" + puerto)
+	conn, err := net.DialTimeout("tcp", direccion + ":" + puerto, 5 * time.Second)
 	if err != nil {
 		fmt.Println("No se pudo establecer la conexión.")
 		return nil
@@ -60,9 +61,9 @@ func (cliente *Cliente) Lee(conn net.Conn) {
 	for {
 		str, err := reader.ReadString('\n')
 		if err != nil {
+			cliente.Activo <- false
 			cliente.Conectado = false
 			cliente.Identificado = false
-			cliente.Activo <- false
 			return
 		}
 		fmt.Print(str)
@@ -106,10 +107,16 @@ func (cliente *Cliente) Escribe2(conn net.Conn) {
 		case str := <- cliente.Saliente:
 			_, err := escritor.WriteString(str)
 			if err != nil {
+				cliente.Activo <- false
+				cliente.Conectado = false
+				cliente.Identificado = false
 				return
 			}
 			err = escritor.Flush()
 			if err != nil {
+				cliente.Activo <- false
+				cliente.Conectado = false
+				cliente.Identificado = false
 				return
 			}
 		default:
