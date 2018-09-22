@@ -1,0 +1,191 @@
+\documentclass{article}
+
+%Opciones de idioma
+\usepackage[spanish]{babel}
+
+%Hipervínculos
+\usepackage{hyperref}
+\hypersetup{
+	colorlinks=true,
+	linkcolor=blue,
+	urlcolor=cyan,
+}
+
+\title{Modelado y Programaci\'on \\ Proyecto 1}
+\author{C\'esar Hern\'andez Cruz}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+El Proyecto 1 de la clase Modelado y Programaci\'on consiste
+en un chat, implementado como una aplicaci\'on de escritorio.   Este
+chat consta de dos partes, un servidor, y un cliente, que se
+comunican mediante un protocolo de red determinado en el curso.
+
+El objetivo de este documento es describir mi implementaci\'on de
+dicha aplicaci\'on.
+\end{abstract}
+
+\section{El proyecto}
+La aplicaci\'on a desarrollarse consta de dos partes, un servidor y un 
+cliente.   El servidor recibe conexiones de red de de diversos clientes y
+atiende las solicitude que estos realizan, e.g., identificarse, enviar mensajes
+a una sala de chat general, crear salas de chat, invitar a otros usuarios a
+dichas salas, enviar mensajes directos a otros usuarios, cambiar de estado,
+solicitar la lista de usuarios conectados, etc.   Existe un protocolo previamente
+determinado para que el cliente pueda comunicarse con el servidor, y a
+su vez, pueda procesar los mensajes que recibe, ya sea de otros usuarios,
+o en respuesta a sus solicitudes.
+
+El servidor est\'a implementado como una aplicaci\'on que se ejecuta en la
+terminal, mientras que el cliente es una aplicaci\'on de escritorio con una
+interfaz gr\'afica.
+
+
+\section{Lenguaje de implementaci\'on}
+
+El lenguaje que eleg\'i para implementar mi proyecto es
+\href{https://golang.org/}{Go}.   Con la restricci\'on de tiempo para
+aprender un nuevo lenguaje de programaci\'on, al mismo tiempo
+desarrollar por primera vez un proyecto desde cero y hacer por
+primera vez una interfaz gr\'afica, me interesaba utilizar un lenguaje
+que fuera nuevo para mi, y que cumpiera con algunas restricciones:
+que tuviera manejo autom\'atico de memoria, que tuviera una sintaxis
+sencilla, pero que fuera robusto para llevar a cabo un proyecto
+mediano.   Descart\'e Python porque, aunque cumple con las dos
+primeras propiedades, en el pasado he trabajado con \'el y hab\'ia
+notado que al no ser compilado, hay errores que son muy dif\'iciles
+de detectar (en mi limitada experiencia), lo que lo hace no cumplir
+con mi tercer requerimiento.
+
+Me encontr\'e con que Go cuenta con una comunidad de usuarios
+donde es f\'acil encontrar apoyo para aquellos que empezamos con
+el lenguaje.   Adem\'as, tiene una sintaxis amigable, y tiene algunas
+estructuras interesante, como los
+\href{https://tour.golang.org/concurrency/2}{canales}, dise\~nados
+para facilitar la concurrencia.   Tambi\'en, sus herramientas para
+compilar, correr pruebas y ejecutar los programas, me parecieron
+atractivas para facilitar dichas tareas y poder concentrarme en la
+implementaci\'on.   Tras realizar el
+\href{https://tour.golang.org/welcome/1}{tour de go}, qued\'e
+convencido de utilizar este lenguaje.
+
+En retrospectiva, creo que lo que menos me convence del lenguaje
+son las bibliotecas para las interfaces gr\'aficas.  Eleg\'i gotk, un
+``binding'' para gtk, cuya documentaci\'on (y ejemplos) deja mucho
+que desear.   Eleg\'i esta biblioteca pues es ampliamente utilizada,
+y es f\'acil encontrar ejemplos, que aunque est\'an en otros lenguajes
+(principalmente C, Python y Ruby), es relativamente f\'acil traducirlos
+a Go.
+
+Utilic\'e dos versiones de Go:
+\begin{itemize}
+	\item go version go1.10.3 darwin/amd64 (MacOS)
+	
+	\item go version go1.10.1 linux/amd64 (Ubuntu)
+\end{itemize}
+
+
+\section{C\'omo obtener y ejecutar el programa}
+
+El c\'odigo de mi proyecto se encuentra en mi
+\href{https://github.com/Japodrilo/MyP-Proyecto1}{repositorio de github},
+mismo que puede ser clonado con el comando
+\begin{center}
+\texttt{\$ git clone https://github.com/Japodrilo/MyP-Proyecto1.git}
+\end{center}
+El lenguaje Go tiene algunas restricciones respecto a la organizaci\'on
+de las carpetas, y aunque no todas son est\'andar, la ruta principal
+para todos los proyectos con Go debe de ser la misma para que las
+herramientas de compilaci\'on y ejecuci\'on funcionen correctamente,
+esta ruta es conocida como
+\href{https://golang.org/doc/code.html}{\texttt{GOPATH}}
+y est\'a asociada a una variable que 	especifica el lugar de nuestro
+``workspace''.
+
+En particular, la ruta para este proyecto debe de ser
+\begin{center}
+\texttt{GOPATH/src/github.com/Japodrilo/MyP-Proyecto1/}
+\end{center}
+
+La \'unica dependencia para este proyecto es la biblioteca para
+interfaces gr\'aficas \href{https://github.com/gotk3}{gotk3}, que
+puede instalarse en Ubuntu con el comando
+\begin{center}
+\texttt{\$ go get github.com/gotk3/gotk3/gtk}
+\end{center}
+y que a su vez tiene las siguientes dependencias
+\begin{itemize}
+	\item GTK 3.6-3.16
+	
+	\item GLib 2.36-2.40
+	
+	\item Cairo 1.10 o 1.12
+\end{itemize}
+que pueden instalarse en Ubuntu con el comando
+\begin{center}
+\texttt{\$ sudo apt-get install libgtk-3-dev libcairo2-dev libglib2.0-dev}
+\end{center}
+En caso de requerir instalarlo en otro sistema operativo, la
+documentaci\'on oficial puede consultarse
+\href{https://github.com/gotk3/gotk3/wiki#installation}{aqu\'i}.
+La ruta de gotk3 debe de ser
+\begin{center}
+\texttt{GOPATH/src/github.com/gotk3/gotk3}
+\end{center}
+y la variable \texttt{GOBIN} debe de estar definida para que los
+archivos binarios se guarden autom\'aticamente en dicha ruta.
+
+Una vez con ambas variables definidas, los archivos binarios
+pueden generarse con el comando
+\begin{center}
+\texttt{GOPATH/src/github.com/Japodrilo/MyP-Proyecto1/go install ./...}
+\end{center}
+mismos que se guardarán en la ruta dada por \texttt{GOBIN}.
+También, el cliente puede correrse con el comando
+\begin{center}
+\texttt{GOPATH/src/github.com/Japodrilo/MyP-Proyecto1/cmd/cliente/go run cliente.go}
+\end{center}
+y el servidor con el comando
+\begin{center}
+\texttt{GOPATH/src/github.com/Japodrilo/MyP-Proyecto1/cmd/servidor/go run servidor.go puerto}
+\end{center}
+Las clases en el modelo contienen pruebas unitarias que corren con el comando
+\begin{center}
+\texttt{GOPATH/src/github.com/Japodrilo/MyP-Proyecto1/go test ./...}
+\end{center} sin embargo, todas las pruebas fallan por omisi\'on.
+
+Cabe se\~nalar que hay problemas conocidos con gotk3, y en particular,
+hubo una computadora con Ubuntu en la que no pude reproducir la instalaci\'on,
+y la interfaz gr\'afica no funcion\'o como se esperaba.   Algunos problemas
+comunes se discuten \href{https://github.com/gotk3/gotk3/issues}{aqu\'i}.
+
+\section{Interfaz gr\'afica}
+
+La interfaz gr\'afica es muy sencilla.   Cuenta con un men\'u principal con
+cuatro submen\'us.  El primero cuenta con las opciones para conectarse
+y desconectarse.   Todas las opciones est\'an apagadas cuando el cliente
+no est\'a conectado al servidor, excepto ``Conectarse'' y ``Cerrar pesta\~na
+actual''.   Hay un submen\'u llamado ``Estado'', en el que las opciones
+simplemente cambian el estado en el que el usuario se encuentra.   El
+submen\'u pesta\~nas s\'olo tiene la opci\'on de cerrar la pesta\~na actual.
+Finalmente, el men\'u ``Sala'' tiene las opciones autodescriptivas ``Crear''
+e ``Invitar'', adem\'as de la opci\'on ``Mis salas'', donde se pueden abrir
+pesta\~nas para las conversaciones de las salas a las que el usuario
+pertenece.
+
+\section{Problemas conocidos}
+
+Tuve que implementar la actualizaci\'on de la lista de usuarios con ``polling'',
+lo que (creo) provoca un problema al desconectar el cliente y volverlo a
+conectar en la misma ventana.   A veces, el cliente indica que el nombre de
+usuario que se quiere utilizar est\'a ocupado, aunque no sea as\'i.
+
+Es posible cerrar el di\'alogo con el que el usuario se identifica con el servidor.
+No es recomendable hacerlo, pero en caso de hacerlo, puede volverse a
+abrir al volver a introducir los datos de conexi\'on.
+
+\end{document}
