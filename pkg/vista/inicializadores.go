@@ -6,6 +6,14 @@ import(
 	"github.com/gotk3/gotk3/gtk"
 )
 
+/**
+ * Este archivo contiene funciones para inicializar los
+ * objetos de gtk con manejo de errores integrado.   También
+ * se añaden algunas funciones para obtener información de
+ * los mismos, también con manejo de erores.
+ * No se comenta cada una de las funciones, pues lo que hacen
+ * puede deducirse directamente de su nombre.
+ */
 
 func GetBufferTV(tv *gtk.TextView) *gtk.TextBuffer {
 	buffer, err := tv.GetBuffer()

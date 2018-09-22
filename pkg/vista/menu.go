@@ -4,6 +4,10 @@ import(
 	"github.com/gotk3/gotk3/gtk"
 )
 
+/**
+ * Estructura que representa el menú en la ventana principal.
+ * Contiene los submenús y los items en cada uno de ellos.
+ */
 type MenuPrincipal struct{
 	Menubar 	  *gtk.MenuBar
 	ConectarMI    *gtk.MenuItem
@@ -17,6 +21,10 @@ type MenuPrincipal struct{
 	SalasMI	      *gtk.MenuItem
 }
 
+/**
+ * Dibuja el menú de la ventana principal e inicializa los
+ * campos que necesita el controlador.
+ */
 func SetupMenuPrincipal() *MenuPrincipal{
 	menubar := SetupMenuBar()
 

@@ -6,6 +6,13 @@ import(
 	"github.com/gotk3/gotk3/gtk"
 )
 
+/**
+ * Estructura que modela las pestañas con conversaciones.
+ * Contiene diccionarios que brindan fácil acceso a las
+ * entradas de texto, visores de texto y pestañas para cada
+ * conversación.   Además, contiene un diccionario de
+ * botones correspondiente a los usuarios conectados.
+ */
 type Cuaderno struct {
 	nb 			*gtk.Notebook
 	entradas    map[string]*gtk.Entry
@@ -14,6 +21,10 @@ type Cuaderno struct {
 	tabs		map[string]int
 }
 
+/**
+ * Constructor que recibe como parámetro un apuntador a
+ * un NoteBook de gtk.
+ */
 func NuevoCuaderno (nb *gtk.Notebook) *Cuaderno {
 	textos := make(map[string]*gtk.TextBuffer)
 	entradas := make(map[string]*gtk.Entry)
@@ -29,6 +40,11 @@ func NuevoCuaderno (nb *gtk.Notebook) *Cuaderno {
 	}
 }
 
+/**
+ * Función que añade una pestaña al NoteBook del cuaderno.
+ * Recibe como parámetro la cadena para ponerle nombre a la
+ * pestaña.
+ */
 func (cuaderno *Cuaderno) AddTab(name string) (*gtk.Entry, *gtk.TextBuffer) {
 	box := vista.SetupBox()
 	entry := vista.SetupEntry()
@@ -52,13 +68,4 @@ func (cuaderno *Cuaderno) AddTab(name string) (*gtk.Entry, *gtk.TextBuffer) {
 	})
 
 	return entry, vista.GetBufferTV(tv)
-}
-
-
-func (cuaderno *Cuaderno) EntradaUsuario(usuario string) *gtk.Entry {
-	return cuaderno.entradas[usuario]
-}
-
-func (cuaderno *Cuaderno) TextoUsuario(usuario string) *gtk.TextBuffer {
-	return cuaderno.textos[usuario]
 }

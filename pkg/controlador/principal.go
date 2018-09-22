@@ -12,7 +12,14 @@ import(
 	"github.com/gotk3/gotk3/gtk"
 	"github.com/gotk3/gotk3/glib"
 )
-
+/**
+ * Controlador de la ventana principal.
+ * Contiene como campos un cliente del paquete modelo, la ventana,
+ * un objeto Cuaderno, la ListBox de la ventana, un objeto menu
+ * del paquete vista, un diccionario de renglones de la List box,
+ * un canal para coordinar la información de invitaciones de salas y
+ * una rebanada de salas.
+ */
 type Principal struct {
 	cliente      *modelo.Cliente
 	win			 *gtk.Window
@@ -22,14 +29,18 @@ type Principal struct {
 	renglones    map[string]*gtk.ListBoxRow
 	canalSalas   chan int
 	salas        []string
-	invitaciones []string
 }
 
+/**
+ * Constructor de la ventana principal.
+ * Le asigna accines al menú, y activa/desactiva las opciones
+ * pertinenetes.
+ */
 func NuevaPrincipal() *Principal {
 	cliente := modelo.NuevoCliente()
 	ventanaPrincipal := vista.SetupVentanaPrincipal()
 	cuaderno := NuevoCuaderno(ventanaPrincipal.Nb)
-	renglones := make (map[string]*gtk.ListBoxRow)
+	renglones := make(map[string]*gtk.ListBoxRow)
 	canalSalas := make(chan int)
 	salas := make([]string, 0)
 
@@ -79,6 +90,12 @@ func NuevaPrincipal() *Principal {
 	return principal
 }
 
+/**
+ * Metodo que inicia la gorutine que escucha los mensajes que llegan
+ * al cliente, y los cambios de estado (conectado y desconectado)
+ * de la aplicación.
+ */
+
 func (principal *Principal) Escucha() {
 	go func() {
 		for {
@@ -97,6 +114,10 @@ func (principal *Principal) Escucha() {
 	}()
 }
 
+/**
+ * Método que apaga todas las acciones que no deben de ejecutarse
+ * cuando el cliente no tiene un socket activo.
+ */
 func (principal *Principal) ApagarTodo() {
 	principal.win.SetTitle("Chat")
 	i := 0
@@ -120,7 +141,14 @@ func (principal *Principal) ApagarTodo() {
 	principal.menu.DesconectarMI.SetSensitive(false)
 }
 
+/**
+ * Método que enciende todas las acciones que deben
+ * de poder utilizarse cuando el servidor tiene un
+ * socket activo.
+ */
 func (principal *Principal) EncenderTodo() {
+	principal.salas = make([]string, 0)
+	principal.renglones = make(map[string]*gtk.ListBoxRow)
 	for _, entrada := range principal.cuaderno.entradas {
 		entrada.SetSensitive(true)
 	}
@@ -134,7 +162,10 @@ func (principal *Principal) EncenderTodo() {
 	principal.menu.DesconectarMI.SetSensitive(true)
 }
 
-
+/**
+ * Método que añade un botón a la listbox para poder
+ * iniciar una conversación privada con un usuario.
+ */
 func (principal *Principal) AddUserButton(username string) {
 	if principal.cuaderno.botones[username] != nil || principal.cliente.Nombre == username {
 		return
@@ -148,6 +179,9 @@ func (principal *Principal) AddUserButton(username string) {
 	principal.win.ShowAll()
 }
 
+/**
+ * Método que elimina la pestaña actual de conversación.
+ */
 func (principal *Principal) eliminaPestana() {
 	if principal.cuaderno.nb.GetCurrentPage() == 0 {
 			return
@@ -163,6 +197,10 @@ func (principal *Principal) eliminaPestana() {
 	}
 }
 
+/**
+ * Método que inica la rutina con la que se actualiza la lista
+ * de usuarios, cada 5 segundos.
+ */
 func actualizaUsuarios(cliente *modelo.Cliente) {
 	ticker := time.NewTicker(5 * time.Second)
 	cliente.Saliente <- "USERS\n"
@@ -178,6 +216,10 @@ func actualizaUsuarios(cliente *modelo.Cliente) {
 	} }()
 }
 
+/**
+ * Método que regresa una función para disparar una ventana
+ * emergente de diálogo para conectarse.
+ */
 func PopUpConectar(cliente *modelo.Cliente) func() {
 	return func() {
 		emergente := vista.NuevaConectar()
@@ -193,18 +235,21 @@ func PopUpConectar(cliente *modelo.Cliente) func() {
 			PopUpIdentificarse(cliente)
 
 			go cliente.Lee(conn)
-			go cliente.Escribe1(conn)
-			go cliente.Escribe2(conn)
+			go cliente.Escribe(conn)
 		})
 	}
 }
 
+/**
+ * Método que regresa una función para disparar una ventana
+ * emergente de diálogo para crear una sala.
+ */
 func (principal *Principal) PopUpCrearSala() {
 	emergente := vista.NuevaCrear()
 	emergente.CrearB.Connect("clicked", func() {
 		nombre := vista.GetTextEntry(emergente.Nombre)
 		principal.cliente.Saliente <- "CREATEROOM " + nombre + "\n"
-		time.Sleep(400 * time.Millisecond)
+		time.Sleep(200 * time.Millisecond)
 		if nombre == "" {
 			emergente.Win.Close()
 			return	
@@ -224,6 +269,11 @@ func (principal *Principal) PopUpCrearSala() {
 	})
 }
 
+
+/**
+ * Método que regresa una función para disparar una ventana
+ * emergente de diálogo para acceder a las salas activas.
+ */
 func (principal *Principal) PopUpMisSalas() {
 	emergente := vista.NuevaMisSalas()
 	for _, sala := range principal.salas {
@@ -243,6 +293,10 @@ func (principal *Principal) PopUpMisSalas() {
 	})
 }
 
+/**
+ * Método que regresa una función para disparar una ventana
+ * emergente de diálogo para identificarse tras la conexión.
+ */
 func PopUpIdentificarse(cliente *modelo.Cliente) {
 	emergente := vista.NuevaIdentificar()
 	emergente.IdentificarB.Connect("clicked", func() {
@@ -255,11 +309,16 @@ func PopUpIdentificarse(cliente *modelo.Cliente) {
 			cliente.Nombre = nombre
 			emergente.Win.Close()
 			cliente.Activo <- true
+			cliente.Activo <- true
 			actualizaUsuarios(cliente)
 		}
 	})
 }
 
+/**
+ * Método que regresa una función para disparar una ventana
+ * emergente de diálogo para invitar usuarios a una sala.
+ */
 func (principal *Principal) PopUpInvitar() {
 	emergente := vista.NuevaInvitar()
 	for usuario, _ := range principal.renglones {
@@ -272,7 +331,7 @@ func (principal *Principal) PopUpInvitar() {
 		sala := emergente.SalaCBT.GetActiveText()
 		nombre := emergente.NombreCBT.GetActiveText()
 		principal.cliente.Saliente <- "INVITE " + sala + " " + nombre + "\n"
-		time.Sleep(400 * time.Millisecond)
+		time.Sleep(200 * time.Millisecond)
 		select{
 			case i := <- principal.canalSalas:
 				switch i {
@@ -290,6 +349,10 @@ func (principal *Principal) PopUpInvitar() {
 	})
 }
 
+/**
+ * Método que regresa una función para disparar una ventana
+ * emergente de diálogo para desconectarse del servidor.
+ */
 func PopUpDesconectar(cliente *modelo.Cliente) func() {
 	return func() {
 		emergente := vista.NuevaDesconectar()
@@ -300,11 +363,20 @@ func PopUpDesconectar(cliente *modelo.Cliente) func() {
 	}
 }
 
+/**
+ * Función que crea una nueva ventana principal, y la dibuja.
+ * Esta es la función que corre el archivo principal para el
+ * cliente (cliente.go)
+ */
 func VentanaPrincipal() {
 	principal := NuevaPrincipal()
 	principal.win.ShowAll()
 }
 
+/**
+ * Función auxiliar que verifica si una rebanada (slice) contiene
+ * un elemento.
+ */
 func contiene(rebanada []string, cadena string) bool {
 	for _, entrada := range rebanada {
 		if entrada == cadena {
@@ -314,7 +386,10 @@ func contiene(rebanada []string, cadena string) bool {
 	return false
 }
 
-
+/**
+ * Método auxiliar que clasifica los mensajes entrantes para pasárselos
+ * al manejador.
+ */
 func (principal *Principal) parse(mensaje string) (string, []string) {
 	prefijo := ""
 	argumentos := strings.Fields(mensaje)
@@ -353,6 +428,9 @@ func (principal *Principal) parse(mensaje string) (string, []string) {
   	return prefijo, argumentos
 }
 
+/**
+ * Método que maneja todos los mensajes entrantes al cliente.
+ */
 func (principal *Principal) manejaEntrada(mensaje string) {
 	prefijo, argumentos := principal.parse(mensaje)
 	switch prefijo {
@@ -361,12 +439,12 @@ func (principal *Principal) manejaEntrada(mensaje string) {
 	case "PUBLIC":
 		nombre := strings.TrimPrefix(argumentos[0], "...PUBLIC-")
 		mensaje := strings.Join(argumentos[1:], " ")
-		mensaje = nombre + " " + mensaje + "\n"
+		mensaje = time.Now().Format(time.Kitchen) + " - " + nombre + " " + mensaje + "\n"
 		principal.cuaderno.textos["General"].InsertAtCursor(mensaje)
 	case "DIRECTO":
 		nombre := strings.TrimSuffix(argumentos[0], ":")
 		mensaje := strings.Join(argumentos[1:], " ")
-		mensaje = nombre + ": " + mensaje + "\n"
+		mensaje = time.Now().Format(time.Kitchen) + " - " + nombre + ": " + mensaje + "\n"
 		if principal.cuaderno.textos[nombre] == nil {
 			glib.IdleAdd(principal.AddTab, nombre)
 			time.Sleep(100 * time.Millisecond)
@@ -381,7 +459,7 @@ func (principal *Principal) manejaEntrada(mensaje string) {
     	}
     	nombre := strings.TrimPrefix(argumentos[0], "..." + sala + "-")
     	mensaje := strings.Join(argumentos[1:], " ")
-    	mensaje = fmt.Sprintf("%v %v\n", nombre, mensaje)
+    	mensaje = time.Now().Format(time.Kitchen) + " - " + fmt.Sprintf("%v %v\n", nombre, mensaje)
     	if principal.cuaderno.textos["*S*-" + sala] == nil {
     		glib.IdleAdd(principal.AddTab, "*S*-" + sala)
     		time.Sleep(100 * time.Millisecond)
@@ -400,7 +478,6 @@ func (principal *Principal) manejaEntrada(mensaje string) {
 		}
 	case "ID":
 		principal.cliente.Identificado = true
-		time.Sleep(400 * time.Millisecond)
 	case "ROOM_OK":
 		principal.canalSalas <- 0
 	case "ROOM_NOT_OK":
@@ -409,13 +486,13 @@ func (principal *Principal) manejaEntrada(mensaje string) {
 		notificacion := "\nEl usuario %s está %s\n\n"
 		switch argumentos[1] {
 		case "ACTIVE":
-			notificacion := fmt.Sprintf(notificacion, argumentos[0], "ACTIVO")
+			notificacion := fmt.Sprintf(notificacion, strings.TrimPrefix(argumentos[0], "..."), "ACTIVO")
 			principal.cuaderno.textos["General"].InsertAtCursor(notificacion)
 		case "AWAY":
-			notificacion := fmt.Sprintf(notificacion, argumentos[0], "ALEJADO")
+			notificacion := fmt.Sprintf(notificacion, strings.TrimPrefix(argumentos[0], "..."), "ALEJADO")
 			principal.cuaderno.textos["General"].InsertAtCursor(notificacion)
 		case "BUSY":
-			notificacion := fmt.Sprintf(notificacion, argumentos[0], "OCUPADO")
+			notificacion := fmt.Sprintf(notificacion, strings.TrimPrefix(argumentos[0], "..."), "OCUPADO")
 			principal.cuaderno.textos["General"].InsertAtCursor(notificacion)
 		}
 	case "INVITATION_OK":
@@ -434,6 +511,10 @@ func (principal *Principal) manejaEntrada(mensaje string) {
 	}
 }
 
+/**
+ * Método para añadir una conversación (pestaña) nueva a la ventana
+ * principal.
+ */
 func(principal *Principal) AddTab(name string) {
 	box := vista.SetupBox()
 	entry := vista.SetupEntry()
@@ -460,6 +541,10 @@ func(principal *Principal) AddTab(name string) {
 	principal.cuaderno.tabs[name] = principal.cuaderno.nb.GetCurrentPage()
 }
 
+/**
+ * Función que determina las acciones de todas las entradas de texto en las
+ * conversaciones.
+ */
 func MainEntryAction(cuaderno *Cuaderno, cliente *modelo.Cliente) func() {
 	return func() {
 		pn := cuaderno.nb.GetCurrentPage()
@@ -471,8 +556,7 @@ func MainEntryAction(cuaderno *Cuaderno, cliente *modelo.Cliente) func() {
 			return
 		}
 		q := cuaderno.textos[user]
-		fmt.Print(text)
-		q.InsertAtCursor(cliente.Nombre + ": " + text)
+		q.InsertAtCursor(time.Now().Format(time.Kitchen) + " - " + cliente.Nombre + ": " + text)
 		switch {
 		case user == "General":
 			cliente.Saliente <- "PUBLICMESSAGE " + text
@@ -485,6 +569,9 @@ func MainEntryAction(cuaderno *Cuaderno, cliente *modelo.Cliente) func() {
 	}
 }
 
+/**
+ * Método que inicializa un botón para ser añadido a la List Box de usuarios.
+ */
 func (principal *Principal) SetupButtonUser(username string) *gtk.Button {
 	btn, err := gtk.ButtonNewWithLabel(username)
 	if err != nil {

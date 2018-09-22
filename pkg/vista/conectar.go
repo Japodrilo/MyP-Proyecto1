@@ -6,6 +6,10 @@ import (
 	"github.com/gotk3/gotk3/gtk"
 )
 
+/**
+ * Estructura que representa a las ventanas relacionadas
+ * con la conexión del cliente al servidor.
+ */
 type Conectar struct {
 	Win        *gtk.Window
 	DireccionE *gtk.Entry
@@ -13,6 +17,11 @@ type Conectar struct {
 	ConectarB  *gtk.Button
 }
 
+/**
+ * Dibuja una ventana nueva para el diálogo de conexión, e
+ * inicializa los campos pertinentes a esta que necesita el
+ * controlador.
+ */
 func NuevaConectar() *Conectar {
 	win := SetupPopupWindow("Conectar", 273, 115)
 	grid := SetupGrid(gtk.ORIENTATION_VERTICAL)
@@ -44,6 +53,10 @@ func NuevaConectar() *Conectar {
 	}
 }
 
+/**
+ * Dibuja una ventana nueva para el diálogo de error en la
+ * conexión.
+ */
 func PopUpErrorConexion(servidor, puerto string) {
 	win := SetupPopupWindow("Error", 500, 48)
 	box := SetupBox()

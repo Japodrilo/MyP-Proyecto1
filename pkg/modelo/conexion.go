@@ -12,9 +12,9 @@ var contadorConexiones = 0
 
 /**
  * Una Conexion contiene la información y las acciones que realiza un
- * cliente al conectarse al servidor.   Tiene un nombre, las salas en las
- * que se encuentra, un canal de mensajes entrantes y salientes, y un
- * lector y un escritor para comunicarse.
+ * cliente al conectarse al servidor (del lado de servidor).   Tiene un
+ * nombre, las salas en las que se encuentra, un canal de mensajes
+ * entrantes y salientes, y un lector y un escritor para comunicarse.
  */
 type Conexion struct {
 	nombre   string

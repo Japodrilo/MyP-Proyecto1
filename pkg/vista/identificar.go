@@ -4,12 +4,21 @@ import (
 	"github.com/gotk3/gotk3/gtk"
 )
 
+/**
+ * Estructura que representa a la ventana de diálogo para
+ * identificar al cliente ante.
+ */
 type Identificar struct {
 	Win           *gtk.Window
 	Nombre        *gtk.Entry
 	IdentificarB  *gtk.Button
 }
 
+/**
+ * Dibuja una ventana nueva para el diálogo de identificación, e
+ * inicializa los campos pertinentes a esta que necesita el
+ * controlador.
+ */
 func NuevaIdentificar() *Identificar {
 	win := SetupPopupWindow("Identifícate", 330, 90)
 	grid := SetupGrid(gtk.ORIENTATION_VERTICAL)
@@ -36,6 +45,9 @@ func NuevaIdentificar() *Identificar {
 	}
 }
 
+/**
+ * Dibuja una ventana nueva para el diálogo de nombre ocupado.
+ */
 func NombreOcupado() {
 	win := SetupPopupWindow("Nombre ocupado", 500, 48)
 	box := SetupBox()

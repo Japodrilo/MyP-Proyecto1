@@ -8,7 +8,8 @@ import (
 
 /**
  * Un Vestibulo administra a los clientes conectados, las salas existentes,
- * y distribuye los mensajes.
+ * y distribuye los mensajes.   Para fines prácticos, este es el servidor,
+ * pero debido a la naturaleza del proyecto, elegí el nombre vestíbulo.
  */
 type Vestibulo struct {
   recepcion   *Recepcion

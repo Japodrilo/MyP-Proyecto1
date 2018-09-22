@@ -4,6 +4,10 @@ import (
 	"github.com/gotk3/gotk3/gtk"
 )
 
+/**
+ * Estructura que representa a la ventana principal y 
+ * sus campos de interés para el controlador.
+ */
 type VentanaPrincipal struct {
 	Win			*gtk.Window
 	Nb			*gtk.Notebook
@@ -11,7 +15,10 @@ type VentanaPrincipal struct {
 	Lb 			*gtk.ListBox
 }
 
-
+/**
+ * Constructor, función que dibuja la ventana principal
+ * e inicializa los campos que necesita el controlador.
+ */
 func SetupVentanaPrincipal() *VentanaPrincipal {
 	win := SetupWindow("Chat")
 	box := SetupBox()

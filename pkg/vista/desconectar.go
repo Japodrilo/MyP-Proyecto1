@@ -4,11 +4,20 @@ import (
 	"github.com/gotk3/gotk3/gtk"
 )
 
+/**
+ * Estructura que representa a la ventana de diálogo para
+ * desconectar al cliente del servidor.
+ */
 type Desconectar struct {
 	Win           *gtk.Window
 	DesconectarB  *gtk.Button
 }
 
+/**
+ * Dibuja una ventana nueva para el diálogo de desconexión, e
+ * inicializa los campos pertinentes a esta que necesita el
+ * controlador.
+ */
 func NuevaDesconectar() *Desconectar {
 	win := SetupPopupWindow("Desconectar", 345, 48)
 	box := SetupBox()

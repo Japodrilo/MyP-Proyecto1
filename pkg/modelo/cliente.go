@@ -3,13 +3,18 @@ package modelo
 import(
 	"bufio"
 	"fmt"
-	//"io"
-	//"log"
-	"os"
 	"net"
 	"time"
 )
 
+/**
+ * Estructura que modela a un cliente.  Contiene una cadena,
+ * con el nombre del cliente, un socket, un canal para comunicar
+ * su estado al controlador, dos canales para comunicar mensajes
+ * con el controlador, un lector y un escritor.   Además cuenta
+ * con dos booleanos que juegan el papel de banderas para señalar
+ * estados.
+ */
 type Cliente struct {
 	Nombre       string
 	conn 		 net.Conn
@@ -22,6 +27,9 @@ type Cliente struct {
 	escritor	 *bufio.Writer
 }
 
+/**
+ * Constructor básico que inicializa un cliente.
+ */
 func NuevoCliente() *Cliente {
 	var conn net.Conn
 	var lector *bufio.Reader
@@ -39,6 +47,11 @@ func NuevoCliente() *Cliente {
 	}
 }
 
+/**
+ * Método que entabla una conexión remota, recibe como parámetros
+ * dos cadenas, indicando la dirección IP y el puerto para entablar
+ * la comunicación.   Regresa un socket.
+ */
 func (cliente *Cliente) Conecta(direccion, puerto string) net.Conn {
 	if cliente.Conectado {
 		return cliente.conn
@@ -54,69 +67,39 @@ func (cliente *Cliente) Conecta(direccion, puerto string) net.Conn {
 }
 
 /**
- * Lee del socket y escribe en la salida estándar.
+ * Método que lee del socket y escribe en el canal Saliente (comunicación
+ * con el controlador).   Está pensado para utilizarse en una goroutine.
  */
 func (cliente *Cliente) Lee(conn net.Conn) {
 	reader := bufio.NewReader(conn)
 	for {
 		str, err := reader.ReadString('\n')
 		if err != nil {
-			cliente.Activo <- false
 			cliente.Conectado = false
 			cliente.Identificado = false
+			cliente.Activo <- false
 			return
 		}
-		fmt.Print(str)
 		cliente.Entrante <- str
 	}
 }
 
-/**
- * Lee de la entrada estándar y escribe en el socket.
- */
-func (cliente *Cliente) Escribe1(conn net.Conn) {
-	lector := bufio.NewReader(os.Stdin)
-	escritor := bufio.NewWriter(conn)
-
-	for {
-		str, err := lector.ReadString('\n')
-		if err != nil {
-			return
-		}
-
-		_, err = escritor.WriteString(str)
-		if err != nil {
-			return
-		}
-
-		err = escritor.Flush()
-		if err != nil {
-			return
-		}
-	}
-}
 
 /**
- * Lee de la entrada estándar y escribe en el socket.
+ * Método qu lee del canal Saliente (comunicación con el controlador) y
+ * escribe en el socket.   Está pensado para utilizarse en una goroutine.
  */
-func (cliente *Cliente) Escribe2(conn net.Conn) {
+func (cliente *Cliente) Escribe(conn net.Conn) {
 	escritor := bufio.NewWriter(conn)
-
 	for {
 		select {
 		case str := <- cliente.Saliente:
 			_, err := escritor.WriteString(str)
 			if err != nil {
-				cliente.Activo <- false
-				cliente.Conectado = false
-				cliente.Identificado = false
 				return
 			}
 			err = escritor.Flush()
 			if err != nil {
-				cliente.Activo <- false
-				cliente.Conectado = false
-				cliente.Identificado = false
 				return
 			}
 		default:
@@ -125,6 +108,10 @@ func (cliente *Cliente) Escribe2(conn net.Conn) {
 	}
 }
 
+/**
+ * Método que desconecta al cliente y avisa al controlador
+ * que ya no está activo mediante el canal Activo.
+ */
 func (cliente *Cliente) Desconecta() {
 	if cliente.Conectado {
 		cliente.Saliente <- "DISCONNECT\n"
