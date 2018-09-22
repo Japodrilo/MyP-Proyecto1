@@ -11,9 +11,9 @@ import (
  */
 type Sala struct {
 	nombre      string
-  propietario *Conexion
+  	propietario *Conexion
 	conexiones  map[*Conexion]bool
-  invitados   map[*Conexion]bool
+  	invitados   map[*Conexion]bool
 	mensajes    []string
 }
 
@@ -23,9 +23,9 @@ type Sala struct {
 func NuevaSala(nombre string, propietario *Conexion) *Sala {
 	return &Sala{
 		nombre:      nombre,
-    propietario: propietario,
+    	propietario: propietario,
 		conexiones:  make(map[*Conexion]bool),
-    invitados:   make(map[*Conexion]bool),
+    	invitados:   make(map[*Conexion]bool),
 		mensajes:    make([]string, 0),
 	}
 }
@@ -34,9 +34,9 @@ func NuevaSala(nombre string, propietario *Conexion) *Sala {
  * Añade al cliente a la sala de chat.
  */
 func (sala *Sala) Agrega(conexion *Conexion) {
-  if conexion.salas[sala.nombre] != nil {
-    return
-  }
+    if conexion.salas[sala.nombre] != nil {
+      return
+    }
 	conexion.salas[sala.nombre] = sala
 	sala.conexiones[conexion] = true
 }
@@ -45,12 +45,12 @@ func (sala *Sala) Agrega(conexion *Conexion) {
  * Añade al cliente a la lista de invitados.
  */
  func (sala *Sala) Invita(conexion *Conexion) {
-   conexion.saliente <- fmt.Sprintf("...INVITATION TO JOIN %v ROOM BY %v\n", sala.nombre, sala.propietario.nombre)
-   conexion.saliente <- fmt.Sprintf("...TO JOIN: JOIN %v\n", sala.nombre)
-   if sala.invitados[conexion] {
-     return
-   }
-   sala.invitados[conexion] = true
+     conexion.saliente <- fmt.Sprintf("...INVITATION TO JOIN %v ROOM BY %v\n", sala.nombre, sala.propietario.nombre)
+     conexion.saliente <- fmt.Sprintf("...TO JOIN: JOIN %v\n", sala.nombre)
+     if sala.invitados[conexion] {
+       return
+     }
+     sala.invitados[conexion] = true
  }
 
 /**
@@ -58,7 +58,7 @@ func (sala *Sala) Agrega(conexion *Conexion) {
  * que han sido enviados en la sala desde su creación.
  */
 func (sala *Sala) Historial(conexion *Conexion) {
-  for _, mensaje := range sala.mensajes {
+    for _, mensaje := range sala.mensajes {
 		conexion.saliente <- mensaje
 	}
 }
@@ -67,9 +67,9 @@ func (sala *Sala) Historial(conexion *Conexion) {
  * Elimina al cliente de la sala de chat.
  */
 func (sala *Sala) Elimina(conexion *Conexion) {
-  delete(sala.conexiones, conexion)
+  	delete(sala.conexiones, conexion)
 	delete(conexion.salas, sala.nombre)
-  delete(sala.invitados, conexion)
+  	delete(sala.invitados, conexion)
 }
 
 /**
@@ -88,8 +88,8 @@ func (sala *Sala) Transmite(mensaje string) {
 func (sala *Sala) TransmiteOtros(mensaje string, conexion *Conexion) {
 	sala.mensajes = append(sala.mensajes, mensaje)
 	for otraConexion, _ := range sala.conexiones {
-    if conexion != otraConexion {
+        if conexion != otraConexion {
 		    otraConexion.saliente <- mensaje
-    }
+        }
 	}
 }

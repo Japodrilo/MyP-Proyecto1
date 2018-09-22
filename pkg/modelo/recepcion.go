@@ -14,9 +14,9 @@ type Recepcion struct {
  * Crea una recepción vacía con el nombre por omisión.
  */
 func NuevaRecepcion() *Recepcion {
-  sala := NuevaSala("recepcion", nil)
-  recepcion := Recepcion{sala}
-  return &recepcion
+    sala := NuevaSala("recepcion", nil)
+    recepcion := Recepcion{sala}
+    return &recepcion
 }
 
 /**

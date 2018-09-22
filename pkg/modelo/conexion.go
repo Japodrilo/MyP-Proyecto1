@@ -18,8 +18,8 @@ var contadorConexiones = 0
  */
 type Conexion struct {
 	nombre   string
-  serial   int
-  status   string
+  	serial   int
+  	status   string
 	salas    map[string]*Sala
 	entrante chan *Mensaje
 	saliente chan string
@@ -38,8 +38,8 @@ func NuevaConexion(conn net.Conn) *Conexion {
 
 	conexion := &Conexion{
 		nombre:   CLIENTE_NOMBRE,
-    serial:   contadorConexiones,
-    status:   STS_ACTIVE,
+    	serial:   contadorConexiones,
+    	status:   STS_ACTIVE,
 		salas:    make(map[string]*Sala),
 		entrante: make(chan *Mensaje),
 		saliente: make(chan string),

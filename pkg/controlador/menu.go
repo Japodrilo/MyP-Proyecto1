@@ -2,8 +2,6 @@ package controlador
 
 import(
 	"github.com/Japodrilo/MyP-Proyecto1/pkg/vista"
-
-	//"github.com/gotk3/gotk3/gtk"
 )
 
 /**

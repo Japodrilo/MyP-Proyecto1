@@ -26,13 +26,13 @@ type Vestibulo struct {
  */
 func NuevoVestibulo() *Vestibulo {
 	vestibulo := &Vestibulo{
-    recepcion:   NuevaRecepcion(),
-		conexionesT: make(map[*Conexion]bool),
-    conexiones:  make(map[string]*Conexion),
-		salas:       make(map[string]*Sala),
-		entrante:    make(chan *Mensaje),
-		join:        make(chan *Conexion),
-		leave:       make(chan *Conexion),
+  recepcion:   NuevaRecepcion(),
+	conexionesT: make(map[*Conexion]bool),
+  conexiones:  make(map[string]*Conexion),
+	salas:       make(map[string]*Sala),
+	entrante:    make(chan *Mensaje),
+	join:        make(chan *Conexion),
+	leave:       make(chan *Conexion),
 	}
 	vestibulo.Escucha()
 	return vestibulo
@@ -60,7 +60,7 @@ func (vestibulo *Vestibulo) Escucha() {
  * Se encarga de los clientes que se conectan al vestíbulo.
  */
 func (vestibulo *Vestibulo) Entrar(conexion *Conexion) {
-	vestibulo.conexionesT[conexion] = true
+  vestibulo.conexionesT[conexion] = true
   vestibulo.recepcion.Agrega(conexion)
   log.Printf("Conexión recibida de %v\n" +
              "Serial de Conexion: %v\n", conexion.conn.RemoteAddr(), conexion.serial)
