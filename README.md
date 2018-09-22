@@ -3,7 +3,7 @@
 Repositorio para el Proyecto 1 en Modelado y Programación
 
 Lenguaje utilizado: Go
-Versiones: go version go1.10.3 darwin/amd64
+Versiones: go version go1.10.3 darwin/amd64;
            go version go1.10.1 linux/amd64
            
 Dependencias: [gotk3](https://github.com/gotk3/gotk3)
